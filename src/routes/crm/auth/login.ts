@@ -38,8 +38,8 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             }
         }
 
-        const user: Worker = (await opts.db.query('SELECT * FROM worker WHERE email = $1', [request.body.email]))[0];
-
+        const user: Worker = (await opts.db.query('SELECT * FROM worker WHERE email = $1', [request.body.email])).rows[0];
+        
         if (!user) {
             reply.statusCode = 401;
             return {
