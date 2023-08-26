@@ -10,7 +10,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
         schema: {
             body: {
                 type: 'object',
-                required: ['email', 'password'],
+                required: ['email'],
                 properties: {
                     email: {
                         type: 'string',
