@@ -48,6 +48,13 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             };
         }
 
+        if (user.is_disabled) {
+            reply.statusCode = 401;
+            return {
+                error: 'USER_DISABLED'
+            };
+        }
+
         return await setJwtCookie(user.id, USER_WORKER, reply);
     });
 }
