@@ -1,7 +1,9 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { compare } from 'bcrypt';
 
 import { jwtVerify, setJwtCookie } from '../../../utils/jwtUtils';
+import { Worker } from '../../../models/worker';
+
+// TODO: Наладить авторизацию
 
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.post('/', {
@@ -14,10 +16,6 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                         type: 'string',
                         maxLength: 50,
                         pattern: '^[a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$'
-                    },
-                    password: {
-                        type: 'string',
-                        pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d@#$%^&+=]{8,64}$'
                     }
                 }
             }
@@ -40,16 +38,16 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             }
         }
 
-        const client = (await opts.db.query('SELECT * FROM worker WHERE email = $1', [request.body.email]))[0];
+        const user: Worker = (await opts.db.query('SELECT * FROM worker WHERE email = $1', [request.body.email]))[0];
 
-        if (!client || !(await compare(request.body.password, client.password))) {
+        if (!user) {
             reply.statusCode = 401;
             return {
                 error: 'INVALID_CREDENTIALS'
             };
         }
 
-        return await setJwtCookie(client.id, 'crm', reply);
+        return await setJwtCookie(user.id, 'worker', reply);
     });
 }
 

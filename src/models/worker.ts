@@ -1,4 +1,4 @@
-type Worker = {
+export type Worker = {
     id: number;
     branch_id: number;
     name: string;

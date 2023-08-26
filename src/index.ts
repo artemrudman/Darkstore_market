@@ -11,10 +11,13 @@ import { config } from 'dotenv';
 import { Pool } from 'pg';
 
 import ws from './ws/ws';
+import { Worker } from './models/worker';
+import { User } from './models/user';
 
 declare module '@fastify/request-context' {
     interface RequestContextData {
-        user: null // TODO: Users models: Worker | User;
+        user: Worker | User;
+        userType: number;
     }
 }
 
