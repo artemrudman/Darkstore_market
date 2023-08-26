@@ -16,7 +16,7 @@ import { User } from './models/user';
 
 declare module '@fastify/request-context' {
     interface RequestContextData {
-        user: Worker | User;
+        user: any;
         userType: number;
     }
 }

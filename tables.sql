@@ -117,7 +117,6 @@ CREATE TABLE user_(
     password CHAR(60),
     email VARCHAR(50) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
-    sale_promocode JSON NOT NULL,
     payment_info JSON,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_disabled BOOLEAN NOT NULL
@@ -155,7 +154,6 @@ CREATE TABLE worker(
         2. break
         3. collects and prepare order
     */
-    sale_promocode JSON NOT NULL,
     is_disabled BOOLEAN NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
