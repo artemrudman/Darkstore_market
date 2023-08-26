@@ -1,5 +1,5 @@
 import { SocketStream } from '@fastify/websocket';
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyInstance, FastifyPluginOptions, FastifyRequest } from 'fastify';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { RawData } from 'ws';
@@ -9,7 +9,7 @@ import { Vars } from '../models/vars';
 import connected from './handlers/connected';
 import disconnected from './handlers/disconnected';
 
-export default async function(app: FastifyInstance) {
+export default async function(app: FastifyInstance, options: FastifyPluginOptions) {
     const handlersPath = join(__dirname, 'handlers');
     const handlers: Map<string, (connection: SocketStream, request: FastifyRequest, vars: Vars, data?: any) => Promise<void>>
          = new Map<string, (connection: SocketStream, request: FastifyRequest, vars: Vars, data?: any) => Promise<void>>();
@@ -25,7 +25,7 @@ export default async function(app: FastifyInstance) {
     }
 
     let vars: Vars = {
-        
+        db: options.db
     };
 
     app.get('/gateway', { websocket: true }, async (connection: SocketStream, request: FastifyRequest) => {

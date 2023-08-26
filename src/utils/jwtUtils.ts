@@ -50,7 +50,7 @@ export async function setJwtCookie(id: Number, type: string, reply: FastifyReply
         secure: process.env.NODE_ENV === 'production'
     });
 
-    return {};
+    return;
 }
 
 // TODO: Add protect function

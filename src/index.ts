@@ -43,6 +43,7 @@ async function run() {
         logger: process.env.NODE_ENV !== 'production',
         https
     });
+    const db = initDB();
 
     await app.register(fastifyStatic, {
         root: join(__dirname, 'public'),
@@ -51,14 +52,16 @@ async function run() {
     await app.register(fastifyAutoload, {
         dir: join(__dirname, 'routes'),
         options: {
-            db: initDB()
+            db
         }
     });
     await app.register(fastifyCookie);
     await app.register(fastifyRequestContext);
     await app.register(fastifyWebsocket);
 
-    await app.register(ws);
+    await app.register(ws, {
+        db
+    });
     
     try {
         await app.listen({
