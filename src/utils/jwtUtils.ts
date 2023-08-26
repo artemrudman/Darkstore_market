@@ -1,6 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { verify, sign, SignOptions } from 'jsonwebtoken';
-import { Pool } from 'pg';
 
 interface TokenInterface {
     id: number;
@@ -12,7 +11,7 @@ type ProtectOptions = {
     role?: string;
 };
 
-async function jwtVerify(token: string) {
+export async function jwtVerify(token: string) {
     return new Promise((resolve, reject) => {
         verify(token, process.env.JWT_SECRET!, (err, decoded) => {
             if (err) return reject(err);
