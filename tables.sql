@@ -5,12 +5,12 @@ CREATE TABLE branch(
     timezone VARCHAR(50) NOT NULL, -- TODO: datatype
     barcode INTEGER NOT NULL, -- TODO: datatype
     phone_number VARCHAR(16) NOT NULL,
-	status SMALLINT NOT NULL,
-	/* 
+    status SMALLINT NOT NULL,
+    /* 
         0. open
         1. closed
         2. acceptance
-	    3. overordered
+        3. overordered
     */
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
@@ -30,15 +30,15 @@ CREATE TABLE branch_items(
     description VARCHAR(350) NOT NULL,
     ingredients VARCHAR(350) NOT NULL,
     barcode INTEGER NOT NULL, -- TODO: datatype
-	weight INTEGER NOT NULL,
-	product_type_id SMALLINT NOT NULL,
-	items JSON NOT NULL,
-	expires_date TIMESTAMP NOT NULL,
+    weight INTEGER NOT NULL,
+    product_type_id SMALLINT NOT NULL,
+    items JSON NOT NULL,
+    expires_date TIMESTAMP NOT NULL,
     is_sale BOOLEAN NOT NULL,
-	price FLOAT NOT NULL,
-	sale_price FLOAT NOT NULL,
-    link_to_picture VARCHAR(350) DEFAULT 'default_link_to_picture',
-	created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    price FLOAT NOT NULL,
+    sale_price FLOAT NOT NULL,
+    picture_uuid VARCHAR(36) NOT NULL,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
 
@@ -47,8 +47,8 @@ CREATE TABLE branch_shelfs(
     branch_id INTEGER NOT NULL,
     name VARCHAR(50) NOT NULL,
     barcode INTEGER NOT NULL, -- TODO: datatype
-	storage_type_id SMALLINT NOT NULL,
-	status_name_id SMALLINT NOT NULL,
+    storage_type_id SMALLINT NOT NULL,
+    status_name_id SMALLINT NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
@@ -60,7 +60,7 @@ CREATE TABLE branch_shelfs(
 CREATE TABLE acceptance(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
-	items JSON NOT NULL, /* make some marker for accepted items */
+    items JSON NOT NULL, /* make some marker for accepted items */
     is_finished BOOLEAN,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
@@ -81,7 +81,7 @@ CREATE TABLE storage_types(
         ...
     */
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	created_by_id INTEGER NOT NULL
+    created_by_id INTEGER NOT NULL
 );
 
 CREATE TABLE product_types(
@@ -95,7 +95,7 @@ CREATE TABLE product_types(
     */
     storage_type_id SMALLINT NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	created_by_id INTEGER NOT NULL,
+    created_by_id INTEGER NOT NULL
 );
 
 
@@ -104,12 +104,12 @@ CREATE TABLE product_types(
 CREATE TABLE user_(
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
-	password CHAR(60),
-	email VARCHAR(50) NOT NULL,
-	phone_number VARCHAR(16) NOT NULL,
-	sale_promocode JSON NOT NULL,
-	payment_info JSON,
-	registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    password CHAR(60),
+    email VARCHAR(50) NOT NULL,
+    phone_number VARCHAR(16) NOT NULL,
+    sale_promocode JSON NOT NULL,
+    payment_info JSON,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_disabled BOOLEAN NOT NULL
 );
 
@@ -118,9 +118,9 @@ CREATE TABLE worker(
     branch_id INTEGER NOT NULL,
     name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL,
-	phone_number VARCHAR(16) NOT NULL,
-	barcode INTEGER NOT NULL,  -- TODO: datatype
-	role_id INTEGER NOT NULL,
+    phone_number VARCHAR(16) NOT NULL,
+    barcode INTEGER NOT NULL,  -- TODO: datatype
+    role_id INTEGER NOT NULL,
     /* 
         0. technical director
         1. executive director
@@ -130,7 +130,7 @@ CREATE TABLE worker(
         5. technical support
         6. customer support
     */
-	status SMALLINT NOT NULL,
+    status SMALLINT NOT NULL,
     /*
         Deliveryman: 
         0. available
@@ -145,7 +145,7 @@ CREATE TABLE worker(
         2. break
         3. collects and prepare order
     */
-	sale_promocode JSON NOT NULL,
+    sale_promocode JSON NOT NULL,
     is_disabled BOOLEAN NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
@@ -160,17 +160,17 @@ CREATE TABLE operation( /* add all operations here - write logic of text in ever
     branch_id INTEGER NOT NULL,
     description VARCHAR(250) NOT NULL,
     created_by_id INTEGER NOT NULL,
-	created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
-CREATE TABLE order(
+CREATE TABLE order_(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     number VARCHAR(50) NOT NULL,
-	items JSON NOT NULL,
+    items JSON NOT NULL,
     created_by_id INTEGER NOT NULL,
-	status SMALLINT NOT NULL,
+    status SMALLINT NOT NULL,
     /* 
         0. awaiting preparation
         1. preparing
@@ -181,13 +181,13 @@ CREATE TABLE order(
         6. partly returned
         7. not active
     */
-	user_id INTEGER NOT NULL,
-	delivery_address VARCHAR(150) NOT NULL,
-	created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	worker_id INTEGER NOT NULL,
-	deliveryman_id INTEGER NOT NULL, 
+    user_id INTEGER NOT NULL,
+    delivery_address VARCHAR(150) NOT NULL,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    worker_id INTEGER NOT NULL,
+    deliveryman_id INTEGER NOT NULL, 
     start_gather_order_time TIMESTAMP,
     finish_gather_order_time TIMESTAMP,
     deliveryman_take_time TIMESTAMP,
-	delivery_finish_time TIMESTAMP
+    delivery_finish_time TIMESTAMP
 );
