@@ -5,7 +5,7 @@ CREATE TABLE qr(
 
 CREATE TABLE barcode(
     id SERIAL PRIMARY KEY,
-    data VARCHAR(48) NOT NULL
+    data CHAR(64) NOT NULL
 );
 
 CREATE TABLE branch(

@@ -115,6 +115,6 @@ export function protect(db: Pool, options: ProtectOptions, next: any) {
         request.requestContext.set('user', user);
         request.requestContext.set('userType', decoded.t);
 
-        return await next();
+        return await next(request, reply);
     };
 }

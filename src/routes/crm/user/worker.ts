@@ -1,51 +1,20 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
+import { SHA256 } from 'crypto-js';
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_DELIVERYMAN, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, ROLE_WAREHOUSE_WORKER, USER_WORKER } from '../../../utils/constants';
 import { Worker } from '../../../models/worker';
 
-/* 
+function generateHex(size: number) {
+    let result = [];
+    let hexRef = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+  
+    for (let i = 0; i < size; ++i) {
+        result.push(hexRef[Math.floor(Math.random() * 16)]);
+    }
 
-CREATE TABLE worker(
-    id SERIAL PRIMARY KEY,
-    branch_id INTEGER NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    email VARCHAR(50) NOT NULL,
-    phone_number VARCHAR(16) NOT NULL,
-    qr_id INTEGER NOT NULL,
-    role_id INTEGER NOT NULL,
-
-        0. technical director
-        1. executive director
-        2. manager
-        3. warehouse worker
-        4. deliveryman
-        5. technical support
-        6. customer support
-
-        status SMALLINT NOT NULL,
-
-            Deliveryman: 
-            0. available
-            1. returning
-            2. break
-            3. handling over orders
-            4. on the way to client
-            5. picking up order
-            Worker:
-            0. available
-            1. not available
-            2. break
-            3. collects and prepare order
-
-        sale_promocode JSON NOT NULL,
-        is_disabled BOOLEAN NOT NULL,
-        created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        created_by_id INTEGER NOT NULL
-    );
-
-*/
-
+    return result.join('');
+}
 
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.post('/', {
@@ -92,7 +61,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             name: string;
             email: string;
             phone_number: string;
-            role_id: number
+            role_id: number;
         }
     }>, reply: FastifyReply) => {
         if (!(await opts.db.query('SELECT id FROM branch WHERE id = $1', [request.body.branch_id])).rows[0]) {
@@ -101,19 +70,33 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                 error: 'BRANCH_NOT_FOUND'
             };
         }
-
+        
         const user = request.requestContext.get('user') as Worker;
 
-        if (user.role_id === ROLE_MANAGER && (
-            request.body.role_id !== ROLE_WAREHOUSE_WORKER
-            && request.body.role_id !== ROLE_DELIVERYMAN)) {
+        if (user.role_id === ROLE_MANAGER && 
+            request.body.role_id !== ROLE_WAREHOUSE_WORKER &&
+            request.body.role_id !== ROLE_DELIVERYMAN) {
             reply.statusCode = 403;
             return {
                 error: 'FORBIDDEN'
             };
         }
 
-        // TODO: Add query
+        const qrId = (await opts.db.query('INSERT INTO qr VALUES(default, $1) RETURNING id', [
+            SHA256(generateHex(128)).toString()
+        ])).rows[0].id;
+
+        await opts.db.query('INSERT INTO worker VALUES(default, $1, $2, $3, $4, $5, $6, 0, false, default, $7)', [
+            request.body.branch_id,
+            request.body.name,
+            request.body.email,
+            request.body.phone_number,
+            qrId,
+            request.body.role_id,
+            user.id
+        ]);
+
+        return;
     }));
 }
 
