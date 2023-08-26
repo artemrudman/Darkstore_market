@@ -57,7 +57,7 @@ CREATE TABLE branch_shelfs(
 
 
 
-CREATE TABLE acceptances(
+CREATE TABLE acceptance(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
 	items JSON NOT NULL, /* make some marker for accepted items */
@@ -101,7 +101,7 @@ CREATE TABLE product_types(
 
 
 
-CREATE TABLE users(
+CREATE TABLE user_(
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
 	password CHAR(60),
@@ -113,7 +113,7 @@ CREATE TABLE users(
     is_disabled BOOLEAN NOT NULL
 );
 
-CREATE TABLE workers(
+CREATE TABLE worker(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     name VARCHAR(50) NOT NULL,
@@ -155,7 +155,7 @@ CREATE TABLE workers(
 
 
 
-CREATE TABLE operations( /* add all operations here - write logic of text in every operation functions */
+CREATE TABLE operation( /* add all operations here - write logic of text in every operation functions */
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     description VARCHAR(250) NOT NULL,
@@ -164,7 +164,7 @@ CREATE TABLE operations( /* add all operations here - write logic of text in eve
 );
 
 
-CREATE TABLE orders(
+CREATE TABLE order(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     number VARCHAR(50) NOT NULL,
