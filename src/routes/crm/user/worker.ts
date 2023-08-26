@@ -36,7 +36,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
 
         }
     }>, reply: FastifyReply) => {
-
+        return { 'success': true };
     }));
 }
 

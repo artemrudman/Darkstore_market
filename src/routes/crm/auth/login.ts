@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 
 import { jwtVerify, setJwtCookie } from '../../../utils/jwtUtils';
 import { Worker } from '../../../models/worker';
+import { USER_WORKER } from '../../../utils/constants';
 
 // TODO: Наладить авторизацию
 
@@ -47,7 +48,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             };
         }
 
-        return await setJwtCookie(user.id, 'worker', reply);
+        return await setJwtCookie(user.id, USER_WORKER, reply);
     });
 }
 

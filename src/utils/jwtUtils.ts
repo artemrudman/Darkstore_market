@@ -36,8 +36,8 @@ async function jwtSign(payload: object, options: SignOptions) {
     });
 }
 
-export async function setJwtCookie(id: Number, type: string, reply: FastifyReply) {
-    const token = await jwtSign({ id, type }, {
+export async function setJwtCookie(id: number, type: number, reply: FastifyReply) {
+    const token = await jwtSign({ i: id, t: type }, {
         expiresIn: process.env.JWT_EXPIRES_IN,
     });
 
@@ -51,7 +51,8 @@ export async function setJwtCookie(id: Number, type: string, reply: FastifyReply
     reply.cookie('token', token, {
         httpOnly: true,
         maxAge: 3600000 * 24 * parseInt(process.env.JWT_COOKIE_EXPIRES_IN!),
-        secure: process.env.NODE_ENV === 'production'
+        secure: process.env.NODE_ENV === 'production',
+        path: '/'
     });
 
     return;
