@@ -3,9 +3,9 @@ export type Branch = {
     name: string;
     address: string;
     timezone: string;
-    barcode: number;
     phone_number: string;
     status: number;
+    qr: string;
     created_date: number;
     created_by_id: number;
 };

@@ -4,11 +4,10 @@ export type Worker = {
     name: string;
     email: string;
     phone_number: string;
-    barcode: number;
     role_id: number;
     status: number;
-    sale_promocode: object;
     is_disabled: boolean;
+    qr: string;
     created_date: number;
     created_by_id: number;
 };

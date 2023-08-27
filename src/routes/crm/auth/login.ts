@@ -34,11 +34,10 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                 return {
                     error: 'ALREADY_AUTHORIZED'
                 };
-            } catch {
-            }
+            } catch {}
         }
 
-        const user: Worker = (await opts.db.query('SELECT * FROM worker WHERE email = $1', [request.body.email])).rows[0];
+        const user: Worker = (await opts.db.query('SELECT id, role_id, is_disabled FROM worker WHERE email = $1', [request.body.email])).rows[0];
         
         if (!user) {
             reply.statusCode = 401;

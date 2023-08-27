@@ -26,6 +26,10 @@ export const BRANCH_OPEN = 0,
     ORDER_PARTLY_RETURNED = 6,
     ORDER_NOT_ACTIVE = 7,
 
+
+
+    /* USER TYPES */
+
     USER_CLIENT = 0,
     USER_WORKER = 1,
 

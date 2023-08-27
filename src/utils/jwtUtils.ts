@@ -38,7 +38,7 @@ async function jwtSign(payload: object, options: SignOptions) {
 
 export async function setJwtCookie(id: number, type: number, reply: FastifyReply) {
     const token = await jwtSign({ i: id, t: type }, {
-        expiresIn: process.env.JWT_EXPIRES_IN,
+        expiresIn: process.env.JWT_EXPIRES_IN
     });
 
     if (typeof(token) !== 'string') {
@@ -58,7 +58,8 @@ export async function setJwtCookie(id: number, type: number, reply: FastifyReply
     return;
 }
 
-export function protect(db: Pool, options: ProtectOptions, next: any) {
+export function protect(db: Pool, options: ProtectOptions,
+    next: (request: FastifyRequest<any>, reply: FastifyReply) => Promise<any>) {
     return async (request: FastifyRequest, reply: FastifyReply) => {
         if (!request.cookies.token) {
             reply.statusCode = 401;

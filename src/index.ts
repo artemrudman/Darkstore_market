@@ -11,6 +11,7 @@ import { config } from 'dotenv';
 import { Pool } from 'pg';
 
 import ws from './ws/ws';
+
 declare module '@fastify/request-context' {
     interface RequestContextData {
         user: any;
@@ -62,7 +63,7 @@ async function run() {
     await app.register(ws, {
         db
     });
-    
+
     try {
         await app.listen({
             host: '0.0.0.0',

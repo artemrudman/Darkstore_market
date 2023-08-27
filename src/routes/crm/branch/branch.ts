@@ -30,7 +30,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                     name: {
                         type: 'string',
                         maxLength: 50,
-                        pattern: '^[a-zA-Z_ ]+$'
+                        pattern: '^[a-zA-Z ]+$'
                     },
                     address: {
                         type: 'string',
@@ -45,7 +45,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                     phone_number: {
                         type: 'string',
                         maxLength: 16,
-                        pattern: '^[0-9]+$'
+                        pattern: '^\\d+$'
                     },
                 }
             }

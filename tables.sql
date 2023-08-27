@@ -2,7 +2,7 @@ CREATE TABLE branch(
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     address VARCHAR(100) NOT NULL,
-    timezone VARCHAR(50) NOT NULL, -- TODO: datatype
+    timezone VARCHAR(50) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
     status SMALLINT NOT NULL,
     /* 
@@ -41,6 +41,7 @@ CREATE TABLE branch_items(
     ingredients VARCHAR(350) NOT NULL,
     weight INTEGER NOT NULL,
     product_type_id SMALLINT NOT NULL,
+    storage_type_id SMALLINT NOT NULL,
     items JSON NOT NULL,
     expires_date TIMESTAMP NOT NULL,
     is_sale BOOLEAN NOT NULL,
@@ -55,7 +56,7 @@ CREATE TABLE branch_items(
 CREATE TABLE branch_shelfs(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(50) NOT NULL, -- TODO: Max length 50!?
     storage_type_id SMALLINT NOT NULL,
     status_name_id SMALLINT NOT NULL,
     qr CHAR(64) NOT NULL,
@@ -103,7 +104,6 @@ CREATE TABLE product_types(
         drink
         ...
     */
-    storage_type_id SMALLINT NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
@@ -114,9 +114,9 @@ CREATE TABLE product_types(
 CREATE TABLE user_(
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
-    password CHAR(60),
     email VARCHAR(50) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
+    password CHAR(60),
     payment_info JSON,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_disabled BOOLEAN NOT NULL

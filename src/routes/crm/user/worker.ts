@@ -30,7 +30,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                     phone_number: {
                         type: 'string',
                         maxLength: 16,
-                        pattern: '^[0-9]+$'
+                        pattern: '^\\d+$'
                     },
                     role_id: {
                         type: 'number',
