@@ -32,4 +32,4 @@ export async function generateQr(db: Pool, table: string) {
     }
 
     return null;
-}
+} 
