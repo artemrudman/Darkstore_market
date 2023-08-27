@@ -82,21 +82,53 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             };
         }
 
-        const qrId = (await opts.db.query('INSERT INTO qr VALUES(default, $1) RETURNING id', [
-            SHA256(generateHex(128)).toString()
-        ])).rows[0].id;
+        if ((await opts.db.query('SELECT id FROM worker WHERE email = $1', [request.body.email])).rows[0]) {
+            reply.statusCode = 400;
+            return {
+                error: 'EMAIL_ALREADY_USED'
+            };
+        }
+
+        if ((await opts.db.query('SELECT id FROM worker WHERE phone_number = $1', [request.body.phone_number])).rows[0]) {
+            reply.statusCode = 400;
+            return {
+                error: 'PHONE_NUMBER_ALREADY_USED'
+            };
+        }
+
+        let qr;
+        let qrFound = false;
+
+        for (let i = 0; i < 10; ++i) {
+            qr = generateHex(64);
+
+            if (!(await opts.db.query('SELECT id FROM worker WHERE qr = $1', [qr])).rows[0]) {
+                qrFound = true;
+
+                break;
+            }
+        }
+
+        if (!qrFound) {
+            reply.statusCode = 500;
+            return {
+                error: 'INTERNAL_SERVER_ERROR'
+            };
+        }
 
         await opts.db.query('INSERT INTO worker VALUES(default, $1, $2, $3, $4, $5, $6, 0, false, default, $7)', [
             request.body.branch_id,
             request.body.name,
             request.body.email,
             request.body.phone_number,
-            qrId,
+            SHA256(qr!).toString(),
             request.body.role_id,
             user.id
         ]);
 
-        return;
+        return {
+            qr
+        };
     }));
 }
 

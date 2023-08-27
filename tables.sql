@@ -1,19 +1,9 @@
-CREATE TABLE qr(
-    id SERIAL PRIMARY KEY,
-    data CHAR(64) NOT NULL
-);
-
-CREATE TABLE barcode(
-    id SERIAL PRIMARY KEY,
-    data CHAR(64) NOT NULL
-);
-
 CREATE TABLE branch(
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     address VARCHAR(100) NOT NULL,
     timezone VARCHAR(50) NOT NULL, -- TODO: datatype
-    qr_id INTEGER NOT NULL, -- TODO: datatype
+    qr CHAR(64) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
     status SMALLINT NOT NULL,
     /* 
@@ -39,7 +29,7 @@ CREATE TABLE branch_items(
     name VARCHAR(150) NOT NULL,
     description VARCHAR(350) NOT NULL,
     ingredients VARCHAR(350) NOT NULL,
-    barcode_id INTEGER NOT NULL,
+    barcode CHAR(64) NOT NULL,
     weight INTEGER NOT NULL,
     product_type_id SMALLINT NOT NULL,
     items JSON NOT NULL,
@@ -56,7 +46,7 @@ CREATE TABLE branch_shelfs(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     name VARCHAR(50) NOT NULL,
-    qr_id INTEGER NOT NULL,
+    qr CHAR(64) NOT NULL,
     storage_type_id SMALLINT NOT NULL,
     status_name_id SMALLINT NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -128,7 +118,7 @@ CREATE TABLE worker(
     name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
-    qr_id INTEGER NOT NULL,
+    qr CHAR(64) NOT NULL,
     role_id INTEGER NOT NULL,
     /* 
         0. technical director
