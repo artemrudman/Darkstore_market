@@ -2,9 +2,9 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 
 import { jwtVerify, setJwtCookie } from '../../../utils/jwtUtils';
 import { Worker } from '../../../models/worker';
-import { USER_WORKER } from '../../../utils/constants';
+import { ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, ROLE_TECHNICAL_SUPPORT, USER_WORKER } from '../../../utils/constants';
 
-// TODO: Наладить авторизацию
+// TODO: Сделать авторизацию по телефону
 
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.post('/', {
@@ -24,7 +24,6 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
     }, async (request: FastifyRequest<{
         Body: {
             email: string;
-            password: string;
         }
     }>, reply: FastifyReply) => {
         if (request.cookies.token) {
@@ -52,6 +51,13 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             reply.statusCode = 401;
             return {
                 error: 'USER_DISABLED'
+            };
+        }
+
+        if (![ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_SUPPORT].includes(user.role_id)) {
+            reply.statusCode = 403;
+            return {
+                error: 'FORBIDDEN'
             };
         }
 

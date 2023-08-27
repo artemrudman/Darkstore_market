@@ -5,7 +5,7 @@
   "repository": "github:artemrudman/market_business",
   "scripts": {
     "build": "rimraf ./build && tsc",
-    "start": "npm run build && node build/index.js",
+    "start": "yarn run build && node build/index.js",
     "start:dev": "npx nodemon"
   },
   "author": "xysed, artemrudman",

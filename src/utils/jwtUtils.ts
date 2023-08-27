@@ -12,7 +12,7 @@ interface TokenInterface {
 }
 
 type ProtectOptions = {
-    userType?: number[];
+    userType: number;
     role?: number[]
 };
 
@@ -78,7 +78,7 @@ export function protect(db: Pool, options: ProtectOptions, next: any) {
             };
         }
         
-        if (options.userType && !options.userType.includes(decoded.t)) {
+        if (options.userType && options.userType !== decoded.t) {
             reply.statusCode = 403;
             return {
                 error: 'FORBIDDEN'
@@ -92,7 +92,7 @@ export function protect(db: Pool, options: ProtectOptions, next: any) {
         } else if (decoded.t === USER_WORKER) {
             user = (await db.query('SELECT * FROM worker WHERE id = $1', [decoded.i])).rows[0] as Worker;
 
-            if (options.role && !options.role.includes(user.role_id)) {
+            if (user && options.role && !options.role.includes(user.role_id)) {
                 reply.statusCode = 403;
                 return {
                     error: 'FORBIDDEN'
@@ -105,7 +105,7 @@ export function protect(db: Pool, options: ProtectOptions, next: any) {
             };
         }
 
-        if (!user) {
+        if (!user || user.is_disabled) {
             reply.statusCode = 403;
             return {
                 error: 'FORBIDDEN'

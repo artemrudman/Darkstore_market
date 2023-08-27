@@ -3,7 +3,6 @@ CREATE TABLE branch(
     name VARCHAR(50) NOT NULL,
     address VARCHAR(100) NOT NULL,
     timezone VARCHAR(50) NOT NULL, -- TODO: datatype
-    qr CHAR(64) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
     status SMALLINT NOT NULL,
     /* 
@@ -12,13 +11,24 @@ CREATE TABLE branch(
         2. acceptance
         3. overordered
     */
+    qr CHAR(64) NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
 
 CREATE TABLE branch_working_hours(
     branch_id INTEGER NOT NULL,
+    status SMALLINT NOT NULL,
+    /* 
+        0. Open according to schedule
+        1. Closed all day
+    */
     day SMALLINT NOT NULL,
+    /* 
+        0. Monday
+        ...
+        6. Sunday
+    */
     start_time TIME NOT NULL,
     end_time TIME NOT NULL
 );
@@ -29,7 +39,6 @@ CREATE TABLE branch_items(
     name VARCHAR(150) NOT NULL,
     description VARCHAR(350) NOT NULL,
     ingredients VARCHAR(350) NOT NULL,
-    barcode CHAR(64) NOT NULL,
     weight INTEGER NOT NULL,
     product_type_id SMALLINT NOT NULL,
     items JSON NOT NULL,
@@ -38,6 +47,7 @@ CREATE TABLE branch_items(
     price FLOAT NOT NULL,
     sale_price FLOAT NOT NULL,
     picture_uuid VARCHAR(36) NOT NULL,
+    barcode CHAR(64) NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
@@ -46,9 +56,9 @@ CREATE TABLE branch_shelfs(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     name VARCHAR(50) NOT NULL,
-    qr CHAR(64) NOT NULL,
     storage_type_id SMALLINT NOT NULL,
     status_name_id SMALLINT NOT NULL,
+    qr CHAR(64) NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
@@ -118,7 +128,6 @@ CREATE TABLE worker(
     name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
-    qr CHAR(64) NOT NULL,
     role_id INTEGER NOT NULL,
     /* 
         0. technical director
@@ -145,6 +154,7 @@ CREATE TABLE worker(
         3. collects and prepare order
     */
     is_disabled BOOLEAN NOT NULL,
+    qr CHAR(64) NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
