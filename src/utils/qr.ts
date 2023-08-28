@@ -1,17 +1,15 @@
 import { SHA256 } from "crypto-js";
 import { Pool } from "pg";
 
-// TODO: Генерировать строку из рандомных символов
-
-function generateHex() {
-    const hexRef = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
-    let result = [];
+function generateData() {
+    const chars = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+    let result = '';
 
     for (let i = 0; i < 64; ++i) {
-        result.push(hexRef[Math.floor(Math.random() * 16)]);
+        result += chars[Math.floor(Math.random() * 94)];
     }
 
-    return result.join('');
+    return result;
 }
 
 function escapeElement(element: string) {
@@ -22,11 +20,11 @@ export async function generateQr(db: Pool, table: string) {
     let qr;
 
     for (let i = 0; i < 3; ++i) {
-        qr = SHA256(generateHex()).toString();
+        qr = generateData();
 
         if (!(await db.query(`SELECT id FROM ${
             escapeElement(table)
-        } WHERE qr = $1`, [qr])).rows[0]) {
+        } WHERE qr = $1`, [SHA256(qr).toString()])).rows[0]) {
             return qr;
         }
     }

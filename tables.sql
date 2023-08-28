@@ -58,7 +58,7 @@ CREATE TABLE branch_shelfs(
     branch_id INTEGER NOT NULL,
     name VARCHAR(50) NOT NULL, -- TODO: Max length 50!?
     storage_type_id SMALLINT NOT NULL,
-    status_name_id SMALLINT NOT NULL,
+    is_active BOOLEAN NOT NULL,
     qr CHAR(64) NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
@@ -72,7 +72,7 @@ CREATE TABLE acceptance(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     items JSON NOT NULL, /* make some marker for accepted items */
-    is_finished BOOLEAN,
+    is_finished BOOLEAN NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
@@ -116,8 +116,8 @@ CREATE TABLE user_(
     name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
-    password CHAR(60),
-    payment_info JSON,
+    password CHAR(60) NOT NULL,
+    payment_info JSON NOT NULL,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_disabled BOOLEAN NOT NULL
 );
@@ -175,9 +175,8 @@ CREATE TABLE operation( /* add all operations here - write logic of text in ever
 CREATE TABLE order_(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
-    number VARCHAR(50) NOT NULL,
+    number VARCHAR(50) NOT NULL, -- ?
     items JSON NOT NULL,
-    created_by_id INTEGER NOT NULL,
     status SMALLINT NOT NULL,
     /* 
         0. awaiting preparation
@@ -189,13 +188,14 @@ CREATE TABLE order_(
         6. partly returned
         7. not active
     */
-    user_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL, -- ?
     delivery_address VARCHAR(150) NOT NULL,
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     worker_id INTEGER NOT NULL,
+    worker_start_time TIMESTAMP NOT NULL,
+    worker_end_time TIMESTAMP NOT NULL,
     deliveryman_id INTEGER NOT NULL, 
-    start_gather_order_time TIMESTAMP,
-    finish_gather_order_time TIMESTAMP,
-    deliveryman_take_time TIMESTAMP,
-    delivery_finish_time TIMESTAMP
+    deliveryman_start_time TIMESTAMP NOT NULL,
+    deliveryman_end_time TIMESTAMP NOT NULL,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by_id INTEGER NOT NULL,
 );

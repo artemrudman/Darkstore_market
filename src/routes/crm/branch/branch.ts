@@ -1,4 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
+import { SHA256 } from 'crypto-js';
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_EXECUTIVE_DIRECTOR, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
@@ -84,7 +85,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             request.body.address,
             request.body.timezone,
             request.body.phone_number,
-            qr,
+            SHA256(qr).toString(),
             user.id
         ]);
 
