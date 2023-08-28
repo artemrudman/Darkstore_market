@@ -25,7 +25,8 @@ export default async function(app: FastifyInstance, options: FastifyPluginOption
     }
 
     let vars: Vars = {
-        db: options.db
+        db: options.db,
+        redis: options.redis
     };
 
     app.get('/gateway', { websocket: true }, async (connection: SocketStream, request: FastifyRequest) => {

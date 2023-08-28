@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
 
-import { jwtVerify, setJwtCookie } from '../../../utils/jwtUtils';
+import { setJwtCookie } from '../../../utils/jwtUtils';
 import { Worker } from '../../../models/worker';
 import { ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, ROLE_TECHNICAL_SUPPORT, USER_WORKER } from '../../../utils/constants';
 

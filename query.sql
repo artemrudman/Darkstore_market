@@ -7,7 +7,7 @@ INSERT INTO branch VALUES
     (default, 'Berlin Center', 'Wolffring 72, 12101 Berlin, Germany', 'Europe/Berlin', '4563791357', 0, '6a76571898c9175016b7beed881b2dd864894de17407c8ce19e4e895f45e1f95', default, 1);
 
 INSERT INTO branch_working_hours VALUES
-    (1, 0, '07:00', '23:00'),
+    (1, 0, 0, '07:00', '23:00'),
     (1, 0, 1, '07:00', '23:00'),
     (1, 0, 2, '07:00', '23:00'),
     (1, 0, 3, '07:00', '23:00'),
@@ -41,4 +41,4 @@ INSERT INTO worker VALUES
     (default, 1, 'James Moore', 'james.moore@protonmail.com', '41441234567', 4, 0, false, 'e208bf7a4e012a6624306b3470116a268aa9c37be0cc44169b72a4195ab8a008', default, 1),
     (default, 2, 'Emma Garcia', 'emma.garcia@icloud.com', '33123456789', 3, 0, false, '093107f7378e1eaa9e34ac4d338769dd8bd6a3ae98a63ddccd5739c861b671a1', default, 1),
     (default, 2, 'Michael Hall', 'michael.hall@example.com', '390612345678', 4, 0, false, 'c2c06c86bd34cde229948cf672ded3bb5cb4fdff51cb6ca7c065b3423f5e2541', default, 1),
-    (default, 2, 'Olivia Martin', 'olivia.martin@inbox.com', '85298765432', 4, 0, false, 'c3692e1f01a8aa674ec4a064690703a4527152e2f715dc5d4f0ae6b2bba74742', default, 1),
+    (default, 2, 'Olivia Martin', 'olivia.martin@inbox.com', '85298765432', 4, 0, false, 'c3692e1f01a8aa674ec4a064690703a4527152e2f715dc5d4f0ae6b2bba74742', default, 1);

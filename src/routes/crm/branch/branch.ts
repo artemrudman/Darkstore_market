@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 import { SHA256 } from 'crypto-js';
 
 import { protect } from '../../../utils/jwtUtils';
-import { ROLE_EXECUTIVE_DIRECTOR, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
+import { ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
 import { Worker } from '../../../models/worker';
 import { generateQr } from '../../../utils/qr';
 
@@ -22,6 +22,96 @@ function checkTimezone(timeZone: string) {
 }
 
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
+    app.get('/list', {
+        schema: {
+            querystring: {
+                type: 'object',
+                required: ['page'],
+                properties: {
+                    only_name: {
+                        type: 'number',
+                        enum: [0, 1]
+                    },
+                    page: {
+                        type: 'number',
+                        minimum: 0
+                    }
+                }
+            }
+        }
+    }, protect(opts.db, opts.redis, {
+        userType: USER_WORKER,
+        role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR]
+    }, async (request: FastifyRequest<{
+        Querystring: {
+            only_name?: number;
+            page: number;
+        }
+    }>, reply: FastifyReply) => {
+        if (request.query.only_name) {
+            return (await opts.db.query('SELECT name FROM branch LIMIT 15 OFFSET $1', [
+                request.query.page * 15
+            ])).rows;
+        }
+
+        return (await opts.db.query('SELECT name, timezone FROM branch LIMIT 15 OFFSET $1', [
+            request.query.page * 15
+        ])).rows;
+    }));
+
+    app.get('/:branch_id', {
+        schema: {
+            params: {
+                type: 'object',
+                required: ['branch_id'],
+                properties: {
+                    branch_id: {
+                        type: 'number',
+                        minimum: 1,
+                        maximum: 2147483647
+                    }
+                }
+            },
+        }
+    }, protect(opts.db, opts.redis, {
+        userType: USER_WORKER,
+        role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
+    }, async (request: FastifyRequest<{
+        Params: {
+            branch_id: number;
+        }
+    }>, reply: FastifyReply) => {
+        if ((await opts.db.query('SELECT 1 FROM branch WHERE id = $1', [
+            request.params.branch_id])).rowCount === 0) {
+            reply.statusCode = 404;
+            return {
+                error: 'BRANCH_NOT_FOUND'
+            };
+        }
+
+        const user = request.requestContext.get('user') as Worker;
+
+        if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
+            reply.statusCode = 403;
+            return {
+                error: 'FORBIDDEN'
+            };
+        }
+
+        const branch = (await opts.db.query('SELECT id, name, address, timezone, phone_number, status FROM branch WHERE id = $1', [
+            request.params.branch_id
+        ])).rows[0];
+
+        if (!branch) {
+            reply.statusCode = 404;
+            return {
+                error: 'NOT_FOUND'
+            };
+        }
+
+        return branch;
+    }));
+
     app.post('/', {
         schema: {
             body: {

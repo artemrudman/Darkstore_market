@@ -40,8 +40,8 @@ CREATE TABLE branch_items(
     description VARCHAR(350) NOT NULL,
     ingredients VARCHAR(350) NOT NULL,
     weight INTEGER NOT NULL,
-    product_type_id SMALLINT NOT NULL,
-    storage_type_id SMALLINT NOT NULL,
+    product_type_id INTEGER NOT NULL,
+    storage_type_id INTEGER NOT NULL,
     items JSON NOT NULL,
     expires_date TIMESTAMP NOT NULL,
     is_sale BOOLEAN NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE branch_shelfs(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     name VARCHAR(50) NOT NULL, -- TODO: Max length 50!?
-    storage_type_id SMALLINT NOT NULL,
+    storage_type_id INTEGER NOT NULL,
     is_active BOOLEAN NOT NULL,
     qr CHAR(64) NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -81,7 +81,7 @@ CREATE TABLE acceptance(
 
 
 
-CREATE TABLE storage_types(
+CREATE TABLE storage_type(
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     /* 
@@ -95,7 +95,7 @@ CREATE TABLE storage_types(
     created_by_id INTEGER NOT NULL
 );
 
-CREATE TABLE product_types(
+CREATE TABLE product_type(
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     /* 
@@ -196,6 +196,5 @@ CREATE TABLE order_(
     deliveryman_id INTEGER NOT NULL, 
     deliveryman_start_time TIMESTAMP NOT NULL,
     deliveryman_end_time TIMESTAMP NOT NULL,
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by_id INTEGER NOT NULL,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

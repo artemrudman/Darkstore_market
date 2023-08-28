@@ -29,7 +29,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
         });
 
         await opts.redis.set(request.cookies.token, '', {
-            EX: decoded.exp - Math.floor(Date.now() / 1000)
+            EX: decoded.exp - Math.floor(Date.now() / 1000) + 1
         });
 
         return;

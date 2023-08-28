@@ -22,9 +22,9 @@ export async function generateQr(db: Pool, table: string) {
     for (let i = 0; i < 3; ++i) {
         qr = generateData();
 
-        if (!(await db.query(`SELECT id FROM ${
+        if ((await db.query(`SELECT 1 FROM ${
             escapeElement(table)
-        } WHERE qr = $1`, [SHA256(qr).toString()])).rows[0]) {
+        } WHERE qr = $1`, [SHA256(qr).toString()])).rowCount === 0) {
             return qr;
         }
     }

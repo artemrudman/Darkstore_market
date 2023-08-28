@@ -1,4 +1,4 @@
-export type Item = {
+export type BranchItem = {
     id: number;
     branch_id: number;
     name: string;

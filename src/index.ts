@@ -35,9 +35,7 @@ async function run() {
         logger: process.env.NODE_ENV !== 'production',
         https
     });
-    const db = new Pool({
-        connectionString: process.env.POSTGRES_URL
-    });
+    const db = new Pool({ connectionString: process.env.POSTGRES_URL });
     const redis = createClient({ url: process.env.REDIS_URL });
 
     await redis.connect();
@@ -58,7 +56,8 @@ async function run() {
     await app.register(fastifyWebsocket);
 
     await app.register(ws, {
-        db
+        db,
+        redis
     });
 
     try {

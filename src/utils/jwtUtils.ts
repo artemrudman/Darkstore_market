@@ -12,7 +12,7 @@ export interface TokenInterface {
     t: number;
     iat: number;
     exp: number;
-}
+};
 
 type ProtectOptions = {
     userType: number;
@@ -61,7 +61,7 @@ export async function setJwtCookie(id: number, type: number, reply: FastifyReply
     return;
 }
 
-export function protect(db: Pool, redis: RedisClientType<any>, options: ProtectOptions,
+export function protect(db: Pool, redis: RedisClientType, options: ProtectOptions,
     next: (request: FastifyRequest<any>, reply: FastifyReply) => Promise<any>) {
     return async (request: FastifyRequest, reply: FastifyReply) => {
         if (!request.cookies.token) {
