@@ -152,6 +152,8 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             phone_number: string;
         }
     }>, reply: FastifyReply) => {
+        // TODO: При добавлении магазина добавлять расписание
+        
         if (!checkTimezone(request.body.timezone)) {
             reply.statusCode = 400;
             return {
