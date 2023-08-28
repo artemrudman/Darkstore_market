@@ -41,7 +41,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                 }
             }
         }
-    }, protect(opts.db, {
+    }, protect(opts.db, opts.redis, {
         userType: USER_WORKER,
         role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
     }, async (request: FastifyRequest<{

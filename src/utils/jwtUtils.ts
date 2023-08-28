@@ -5,15 +5,18 @@ import { Pool } from 'pg';
 import { USER_CLIENT, USER_WORKER } from './constants';
 import { Worker } from '../models/worker';
 import { User } from '../models/user';
+import { RedisClientType } from 'redis';
 
-interface TokenInterface {
+export interface TokenInterface {
     i: number;
     t: number;
+    iat: number;
+    exp: number;
 }
 
 type ProtectOptions = {
     userType: number;
-    role?: number[]
+    role?: number[];
 };
 
 export async function jwtVerify(token: string) {
@@ -58,7 +61,7 @@ export async function setJwtCookie(id: number, type: number, reply: FastifyReply
     return;
 }
 
-export function protect(db: Pool, options: ProtectOptions,
+export function protect(db: Pool, redis: RedisClientType<any>, options: ProtectOptions,
     next: (request: FastifyRequest<any>, reply: FastifyReply) => Promise<any>) {
     return async (request: FastifyRequest, reply: FastifyReply) => {
         if (!request.cookies.token) {
@@ -73,6 +76,13 @@ export function protect(db: Pool, options: ProtectOptions,
         try {
             decoded = await jwtVerify(request.cookies.token) as TokenInterface;
         } catch {
+            reply.statusCode = 401;
+            return {
+                error: 'UNAUTHORIZED'
+            };
+        }
+
+        if (await redis.get(request.cookies.token) !== null) {
             reply.statusCode = 401;
             return {
                 error: 'UNAUTHORIZED'

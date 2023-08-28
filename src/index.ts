@@ -8,6 +8,7 @@ import https from 'https';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { config } from 'dotenv';
+import { createClient } from 'redis';
 import { Pool } from 'pg';
 
 import ws from './ws/ws';
@@ -17,16 +18,6 @@ declare module '@fastify/request-context' {
         user: any;
         userType: number;
     }
-}
-
-function initDB() {
-    return new Pool({
-        host: process.env.POSTGRES_HOST,
-        port: parseInt(process.env.POSTGRES_PORT!),
-        user: process.env.POSTGRES_USER,
-        password: process.env.POSTGRES_PASSWORD,
-        database: process.env.POSTGRES_DATABASE
-    });
 }
 
 async function run() {
@@ -44,7 +35,12 @@ async function run() {
         logger: process.env.NODE_ENV !== 'production',
         https
     });
-    const db = initDB();
+    const db = new Pool({
+        connectionString: process.env.POSTGRES_URL
+    });
+    const redis = createClient({ url: process.env.REDIS_URL });
+
+    await redis.connect();
 
     await app.register(fastifyStatic, {
         root: join(__dirname, 'public'),
@@ -53,7 +49,8 @@ async function run() {
     await app.register(fastifyAutoload, {
         dir: join(__dirname, 'routes'),
         options: {
-            db
+            db,
+            redis
         }
     });
     await app.register(fastifyCookie);

@@ -26,17 +26,6 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             email: string;
         }
     }>, reply: FastifyReply) => {
-        if (request.cookies.token) {
-            try {
-                await jwtVerify(request.cookies.token); 
-                
-                reply.statusCode = 409;
-                return {
-                    error: 'ALREADY_AUTHORIZED'
-                };
-            } catch {}
-        }
-
         const user: Worker = (await opts.db.query('SELECT id, role_id, is_disabled FROM worker WHERE email = $1', [request.body.email])).rows[0];
         
         if (!user) {
