@@ -54,7 +54,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             ])).rows;
         }
 
-        return (await opts.db.query('SELECT name, timezone FROM branch LIMIT 15 OFFSET $1', [
+        return (await opts.db.query('SELECT id, name, address, timezone, phone_number, status FROM branch LIMIT 15 OFFSET $1', [
             request.query.page * 15
         ])).rows;
     }));
