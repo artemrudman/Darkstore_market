@@ -1,10 +1,12 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
 import { SHA256 } from 'crypto-js';
+import format from 'pg-format';
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
 import { Worker } from '../../../models/worker';
 import { generateQr } from '../../../utils/qr';
+import { Pool } from 'pg';
 
 function checkTimezone(timeZone: string) {
     if (!Intl || !Intl.DateTimeFormat().resolvedOptions().timeZone) {
@@ -19,6 +21,22 @@ function checkTimezone(timeZone: string) {
     catch {
         return false;
     }
+}
+
+async function generateSchedule(db: Pool, branch_id: number) {
+    let schedule = [];
+
+    for (const day of (await db.query('SELECT status, start_time, end_time FROM branch_working_hours WHERE branch_id = $1', [
+        branch_id
+    ])).rows) {
+        if (day.status === 0) {
+            schedule.push(`${day.start_time.split(':').slice(0, 2).join(':')}-${day.end_time.split(':').slice(0, 2).join(':')}`);
+        } else if (day.status === 1) {
+            schedule.push('Closed');
+        }
+    }
+    
+    return schedule;
 }
 
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
@@ -109,6 +127,8 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             };
         }
 
+        branch.schedule = await generateSchedule(opts.db, request.params.branch_id);
+
         return branch;
     }));
 
@@ -116,7 +136,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
         schema: {
             body: {
                 type: 'object',
-                required: ['name', 'address', 'timezone', 'phone_number'],
+                required: ['name', 'address', 'timezone', 'phone_number', 'schedule'],
                 properties: {
                     name: {
                         type: 'string',
@@ -138,6 +158,15 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                         maxLength: 16,
                         pattern: '^\\d+$'
                     },
+                    schedule: {
+                        type: 'array',
+                        minItems: 7,
+                        maxItems: 7,
+                        items: {
+                            type: 'string',
+                            pattern: '^((([01]\\d|2[0-3]):[0-5]\\d-(0[0-9]|1[0-9]|2[0-3]):[0-5]\\d)|Closed)$'
+                        }
+                    }
                 }
             }
         }
@@ -150,10 +179,9 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
             address: string;
             timezone: string;
             phone_number: string;
+            schedule: string[];
         }
     }>, reply: FastifyReply) => {
-        // TODO: При добавлении магазина добавлять расписание
-        
         if (!checkTimezone(request.body.timezone)) {
             reply.statusCode = 400;
             return {
@@ -171,15 +199,29 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
         }
 
         const user = request.requestContext.get('user') as Worker;
-
-        await opts.db.query('INSERT INTO branch VALUES(default, $1, $2, $3, $4, 0, $5, default, $6)', [
+        const branchId = (await opts.db.query('INSERT INTO branch VALUES(default, $1, $2, $3, $4, 0, $5, default, $6) RETURNING id', [
             request.body.name,
             request.body.address,
             request.body.timezone,
             request.body.phone_number,
             SHA256(qr).toString(),
             user.id
-        ]);
+        ])).rows[0].id;
+        
+        const rows = [];
+        let i = 0;
+
+        for (const day of request.body.schedule) {
+            const parts = day.split('-');
+
+            if (day === 'Closed') {
+                rows.push([branchId, day === 'Closed' ? 1 : 0, i++, '00:00', '00:00']);
+            } else {
+                rows.push([branchId, day === 'Closed' ? 1 : 0, i++, parts[0], parts[1]]);
+            }
+        }
+        
+        await opts.db.query(format('INSERT INTO branch_working_hours VALUES %L', rows));
 
         return {
             qr
