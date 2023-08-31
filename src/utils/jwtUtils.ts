@@ -1,11 +1,9 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { verify, sign, SignOptions } from 'jsonwebtoken';
-import { Pool } from 'pg';
 
 import { USER_CLIENT, USER_WORKER } from './constants';
 import { Worker } from '../models/worker';
 import { User } from '../models/user';
-import { RedisClientType } from 'redis';
 
 export interface TokenInterface {
     i: number;
@@ -61,7 +59,7 @@ export async function setJwtCookie(id: number, type: number, reply: FastifyReply
     return;
 }
 
-export function protect(db: Pool, redis: RedisClientType, options: ProtectOptions,
+export function protect(options: ProtectOptions,
     next: (request: FastifyRequest<any>, reply: FastifyReply) => Promise<any>) {
     return async (request: FastifyRequest, reply: FastifyReply) => {
         if (!request.cookies.token) {
@@ -82,6 +80,8 @@ export function protect(db: Pool, redis: RedisClientType, options: ProtectOption
             };
         }
 
+        const redis = request.requestContext.get('redis');
+
         if (await redis.get(request.cookies.token) !== null) {
             reply.statusCode = 401;
             return {
@@ -97,11 +97,12 @@ export function protect(db: Pool, redis: RedisClientType, options: ProtectOption
         }
 
         let user;
+        const db = request.requestContext.get('db');
 
         if (decoded.t === USER_CLIENT) {
-            user = (await db.query('SELECT * FROM user_ WHERE id = $1', [decoded.i])).rows[0] as User;
+            user = await db.user.getById(decoded.i) as User;
         } else if (decoded.t === USER_WORKER) {
-            user = (await db.query('SELECT * FROM worker WHERE id = $1', [decoded.i])).rows[0] as Worker;
+            user = await db.worker.getById(decoded.i) as Worker;
 
             if (user && options.role && !options.role.includes(user.role_id)) {
                 reply.statusCode = 403;

@@ -8,15 +8,21 @@ import https from 'https';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { config } from 'dotenv';
-import { createClient } from 'redis';
-import { Pool } from 'pg';
+import { RedisClientType, RedisFunctions, RedisModules, RedisScripts, createClient } from 'redis';
 
 import ws from './ws/ws';
+import { DB } from './models/db';
 
 declare module '@fastify/request-context' {
     interface RequestContextData {
-        user: any;
-        userType: number;
+        user?: any;
+        userType?: number;
+        db: DB;
+        redis: RedisClientType<RedisModules, RedisFunctions, RedisScripts>;
+    }
+
+    interface RequestContext {
+        get<K extends keyof RequestContextData>(key: K): RequestContextData[K];
     }
 }
 
@@ -35,7 +41,7 @@ async function run() {
         logger: process.env.NODE_ENV !== 'production',
         https
     });
-    const db = new Pool({ connectionString: process.env.POSTGRES_URL });
+    const db = new DB();
     const redis = createClient({ url: process.env.REDIS_URL });
 
     await redis.connect();
@@ -45,14 +51,15 @@ async function run() {
         extensions: ['html']
     });
     await app.register(fastifyAutoload, {
-        dir: join(__dirname, 'routes'),
-        options: {
+        dir: join(__dirname, 'routes')
+    });
+    await app.register(fastifyCookie);
+    await app.register(fastifyRequestContext, {
+        defaultStoreValues: {
             db,
             redis
         }
     });
-    await app.register(fastifyCookie);
-    await app.register(fastifyRequestContext);
     await app.register(fastifyWebsocket);
 
     await app.register(ws, {

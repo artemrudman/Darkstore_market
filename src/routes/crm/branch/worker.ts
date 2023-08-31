@@ -6,6 +6,126 @@ import { ROLE_DELIVERYMAN, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL
 import { Worker } from '../../../models/worker';
 import { generateQr } from '../../../utils/qr';
 
+async function getList(request: FastifyRequest<{
+    Params: {
+        branch_id: number;
+    },
+    Querystring: {
+        page: number;
+    }
+}>, reply: FastifyReply) {
+    const db = request.requestContext.get('db');
+
+    if (!(await db.branch.hasId(request.params.branch_id))) {
+        reply.statusCode = 404;
+        return {
+            error: 'BRANCH_NOT_FOUND'
+        };
+    }
+
+    const user = request.requestContext.get('user') as Worker;
+
+    if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
+        reply.statusCode = 403;
+        return {
+            error: 'FORBIDDEN'
+        };
+    }
+
+    return await db.worker.getList(request.params.branch_id, request.query.page);
+}
+
+async function get(request: FastifyRequest<{
+    Params: {
+        branch_id: number;
+        worker_id: number;
+    }
+}>, reply: FastifyReply) {
+    const user = request.requestContext.get('user') as Worker;
+
+    if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
+        reply.statusCode = 403;
+        return {
+            error: 'FORBIDDEN'
+        };
+    }
+
+    const db = request.requestContext.get('db');
+
+    if (!(await db.worker.getById(request.params.branch_id))) {
+        reply.statusCode = 404;
+        return {
+            error: 'BRANCH_NOT_FOUND'
+        };
+    }
+
+    const worker = await db.worker.getById(request.params.worker_id);
+
+    if (!worker) {
+        reply.statusCode = 404;
+        return {
+            error: 'NOT_FOUND'
+        };
+    }
+
+    return {
+        id: worker.id,
+        branch_id: worker.branch_id,
+        name: worker.name,
+        role_id: worker.role_id,
+        status: worker.status,
+        is_disabled: worker.is_disabled
+    };
+}
+
+async function post(request: FastifyRequest<{
+    Params: {
+        branch_id: number;
+    },
+    Body: {
+        name: string;
+        email: string;
+        phone_number: string;
+        role_id: number;
+    }
+}>, reply: FastifyReply) {
+    const user = request.requestContext.get('user') as Worker;
+    
+    if (user.role_id === ROLE_MANAGER && 
+        (![ROLE_WAREHOUSE_WORKER, ROLE_DELIVERYMAN].includes(request.body.role_id)
+            || user.branch_id !== request.params.branch_id)) {
+        reply.statusCode = 403;
+        return {
+            error: 'FORBIDDEN'
+        };
+    }
+
+    const db = request.requestContext.get('db');
+
+    if (!(await db.branch.hasId(request.params.branch_id))) {
+        reply.statusCode = 404;
+        return {
+            error: 'BRANCH_NOT_FOUND'
+        };
+    }
+
+    const qr = await generateQr(db.worker);
+
+    if (!qr) {
+        reply.statusCode = 500;
+        return {
+            error: 'INTERNAL_SERVER_ERROR'
+        };
+    }
+
+    await db.worker.create(request.params.branch_id, request.body.name, request.body.email,
+        request.body.phone_number, request.body.role_id, qr, user.id);
+
+    return {
+        qr
+    };
+}
+
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.get('/list', {
         schema: {
@@ -31,38 +151,10 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                 }
             }
         }
-    }, protect(opts.db, opts.redis, {
+    }, protect({
         userType: USER_WORKER,
         role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
-    }, async (request: FastifyRequest<{
-        Params: {
-            branch_id: number;
-        },
-        Querystring: {
-            page: number;
-        }
-    }>, reply: FastifyReply) => {
-        if ((await opts.db.query('SELECT 1 FROM branch WHERE id = $1', [
-            request.params.branch_id])).rowCount === 0) {
-            reply.statusCode = 404;
-            return {
-                error: 'BRANCH_NOT_FOUND'
-            };
-        }
-
-        const user = request.requestContext.get('user') as Worker;
-
-        if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
-            reply.statusCode = 403;
-            return {
-                error: 'FORBIDDEN'
-            };
-        }
-
-        return (await opts.db.query('SELECT id, branch_id, name, role_id, status, is_disabled FROM worker LIMIT 15 OFFSET $1', [
-            request.query.page * 15
-        ])).rows;
-    }));
+    }, getList));
 
     app.get('/:worker_id', {
         schema: {
@@ -83,45 +175,10 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                 }
             },
         }
-    }, protect(opts.db, opts.redis, {
+    }, protect({
         userType: USER_WORKER,
         role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
-    }, async (request: FastifyRequest<{
-        Params: {
-            branch_id: number;
-            worker_id: number;
-        }
-    }>, reply: FastifyReply) => {
-        if ((await opts.db.query('SELECT 1 FROM branch WHERE id = $1', [
-            request.params.branch_id])).rowCount === 0) {
-            reply.statusCode = 404;
-            return {
-                error: 'BRANCH_NOT_FOUND'
-            };
-        }
-
-        const user = request.requestContext.get('user') as Worker;
-
-        if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
-            reply.statusCode = 403;
-            return {
-                error: 'FORBIDDEN'
-            };
-        }
-
-        const worker = (await opts.db.query('SELECT id, branch_id, name, role_id, status, is_disabled FROM worker WHERE id = $1', [
-            request.params.worker_id
-        ])).rows[0];
-
-        if (!worker) {
-            reply.statusCode = 404;
-            return {
-                error: 'NOT_FOUND'
-            };
-        }
-
-        return worker;
-    }));
+    }, get));
 
     app.post('/', {
         schema: {
@@ -163,62 +220,10 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                 }
             }
         }
-    }, protect(opts.db, opts.redis, {
+    }, protect({
         userType: USER_WORKER,
         role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
-    }, async (request: FastifyRequest<{
-        Params: {
-            branch_id: number;
-        },
-        Body: {
-            name: string;
-            email: string;
-            phone_number: string;
-            role_id: number;
-        }
-    }>, reply: FastifyReply) => {
-        const user = request.requestContext.get('user') as Worker;
-        
-        if (user.role_id === ROLE_MANAGER && 
-            (![ROLE_WAREHOUSE_WORKER, ROLE_DELIVERYMAN].includes(request.body.role_id)
-                || user.branch_id !== request.params.branch_id)) {
-            reply.statusCode = 403;
-            return {
-                error: 'FORBIDDEN'
-            };
-        }
-
-        if ((await opts.db.query('SELECT 1 FROM branch WHERE id = $1', [
-            request.params.branch_id])).rowCount === 0) {
-            reply.statusCode = 404;
-            return {
-                error: 'BRANCH_NOT_FOUND'
-            };
-        }
-
-        const qr = await generateQr(opts.db, 'worker');
-
-        if (!qr) {
-            reply.statusCode = 500;
-            return {
-                error: 'INTERNAL_SERVER_ERROR'
-            };
-        }
-
-        await opts.db.query('INSERT INTO worker VALUES(default, $1, $2, $3, $4, $5, 0, false, $6, default, $7)', [
-            request.params.branch_id,
-            request.body.name,
-            request.body.email,
-            request.body.phone_number,
-            request.body.role_id,
-            SHA256(qr).toString(),
-            user.id
-        ]);
-
-        return {
-            qr
-        };
-    }));
+    }, post));
 }
 
 export const autoPrefix = '/crm/branch/:branch_id/worker';

@@ -16,7 +16,7 @@ CREATE TABLE branch(
     created_by_id INTEGER NOT NULL
 );
 
-CREATE TABLE branch_working_hours(
+CREATE TABLE branch_schedule(
     branch_id INTEGER NOT NULL,
     status SMALLINT NOT NULL,
     /* 

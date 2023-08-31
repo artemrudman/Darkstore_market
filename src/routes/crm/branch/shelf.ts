@@ -6,6 +6,49 @@ import { ROLE_EXECUTIVE_DIRECTOR, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '.
 import { Worker } from '../../../models/worker';
 import { generateQr } from '../../../utils/qr';
 
+async function post(request: FastifyRequest<{
+    Params: {
+        branch_id: number;
+    },
+    Body: {
+        name: string;
+        storage_type_id: number;
+    }
+}>, reply: FastifyReply){
+    const db = request.requestContext.get('db');
+    const user = request.requestContext.get('user') as Worker;
+
+    if (!(await db.branch.hasId(request.params.branch_id))) {
+        reply.statusCode = 404;
+        return {
+            error: 'BRANCH_NOT_FOUND'
+        };
+    }
+
+    if (!(await db.storageType.hasId(request.body.storage_type_id))) {
+        reply.statusCode = 404;
+        return {
+            error: 'STORAGE_TYPE_NOT_FOUND'
+        };
+    }
+
+    const qr = await generateQr(db.branchShelf);
+
+    if (!qr) {
+        reply.statusCode = 500;
+        return {
+            error: 'INTERNAL_SERVER_ERROR'
+        };
+    }
+
+    await db.branchShelf.create(request.params.branch_id, request.body.name,
+        request.body.storage_type_id, qr, user.id);
+
+    return {
+        qr
+    };
+}
+
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.post('/', {
         schema: {
@@ -37,57 +80,10 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                 }
             }
         }
-    }, protect(opts.db, opts.redis, {
+    }, protect({
         userType: USER_WORKER,
         role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR]
-    }, async (request: FastifyRequest<{
-        Params: {
-            branch_id: number;
-        },
-        Body: {
-            name: string;
-            storage_type_id: number;
-        }
-    }>, reply: FastifyReply) => {
-        const user = request.requestContext.get('user') as Worker;
-
-        if ((await opts.db.query('SELECT 1 FROM branch WHERE id = $1', [
-            request.params.branch_id])).rowCount === 0) {
-            reply.statusCode = 404;
-            return {
-                error: 'BRANCH_NOT_FOUND'
-            };
-        }
-
-        if ((await opts.db.query('SELECT 1 FROM storage_type WHERE id = $1', [
-            request.body.storage_type_id])).rowCount === 0) {
-            reply.statusCode = 404;
-            return {
-                error: 'STORAGE_TYPE_NOT_FOUND'
-            };
-        }
-
-        const qr = await generateQr(opts.db, 'branch_shelfs');
-
-        if (!qr) {
-            reply.statusCode = 500;
-            return {
-                error: 'INTERNAL_SERVER_ERROR'
-            };
-        }
-
-        await opts.db.query('INSERT INTO branch_shelfs VALUES(default, $1, $2, $3, true, $4, default, $5)', [
-            request.params.branch_id,
-            request.body.name,
-            request.body.storage_type_id,
-            SHA256(qr).toString(),
-            user.id
-        ]);
-
-        return {
-            qr
-        };
-    }));
+    }, post));
 }
 
 export const autoPrefix = '/crm/branch/:branch_id/shelf';

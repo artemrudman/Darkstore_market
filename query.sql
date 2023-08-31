@@ -6,7 +6,7 @@ INSERT INTO branch VALUES
     (default, 'Vienna Center', 'Getreidemarkt 10, 1010 Wien, Austria', 'Europe/Vienna', '3216540987', 0, '37ddae764f4d586e3203f878b7091a65f7dbd2bb87b356b6aeee6a2a60fba993', default, 1),
     (default, 'Berlin Center', 'Wolffring 72, 12101 Berlin, Germany', 'Europe/Berlin', '4563791357', 0, '6a76571898c9175016b7beed881b2dd864894de17407c8ce19e4e895f45e1f95', default, 1);
 
-INSERT INTO branch_working_hours VALUES
+INSERT INTO branch_schedule VALUES
     (1, 0, 0, '07:00', '23:00'),
     (1, 0, 1, '07:00', '23:00'),
     (1, 0, 2, '07:00', '23:00'),
