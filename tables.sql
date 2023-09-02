@@ -58,7 +58,7 @@ CREATE TABLE branch_shelfs(
     branch_id INTEGER NOT NULL,
     name VARCHAR(50) NOT NULL, -- TODO: Max length 50!?
     storage_type_id INTEGER NOT NULL,
-    is_active BOOLEAN NOT NULL,
+    is_disabled BOOLEAN NOT NULL,
     qr CHAR(64) NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL

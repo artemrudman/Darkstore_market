@@ -1,9 +1,69 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
 
 import { protect } from '../../../utils/jwtUtils';
-import { ROLE_EXECUTIVE_DIRECTOR, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
+import { ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
 import { Worker } from '../../../models/worker';
 import { generateQr } from '../../../utils/qr';
+
+async function getList(request: FastifyRequest<{
+    Params: {
+        branch_id: number;
+    },
+    Querystring: {
+        page: number;
+    }
+}>, reply: FastifyReply) {
+    const db = request.requestContext.get('db');
+
+    if (!(await db.branch.hasId(request.params.branch_id))) {
+        reply.statusCode = 404;
+        return {
+            error: 'BRANCH_NOT_FOUND'
+        };
+    }
+
+    const user = request.requestContext.get('user') as Worker;
+
+    if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
+        reply.statusCode = 403;
+        return {
+            error: 'FORBIDDEN'
+        };
+    }
+
+    return await db.branchShelf.getList(request.params.branch_id, request.query.page);
+}
+
+
+
+async function get(request: FastifyRequest<{
+    Params: {
+        shelf_id: number;
+    }
+}>, reply: FastifyReply) {
+    const db = request.requestContext.get('db');
+    const shelf = await db.branchShelf.getById(request.params.shelf_id);
+
+    if (!shelf) {
+        reply.statusCode = 404;
+        return {
+            error: 'NOT_FOUND'
+        };
+    }
+
+    const user = request.requestContext.get('user') as Worker;
+
+    if (user.role_id === ROLE_MANAGER && user.branch_id !== shelf.branch_id) {
+        reply.statusCode = 403;
+        return {
+            error: 'FORBIDDEN'
+        };
+    }
+
+    return shelf;
+}
+
+
 
 async function post(request: FastifyRequest<{
     Params: {
@@ -51,7 +111,44 @@ async function post(request: FastifyRequest<{
 
 
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
-    app.post('/', {
+    app.get('/:branch_id/shelf/list', {
+        schema: {
+            querystring: {
+                type: 'object',
+                required: ['page'],
+                properties: {
+                    page: {
+                        type: 'number',
+                        minimum: 0
+                    }
+                }
+            }
+        }
+    }, protect({
+        userType: USER_WORKER,
+        role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
+    }, getList));
+
+    app.get('/shelf/:shelf_id', {
+        schema: {
+            params: {
+                type: 'object',
+                required: ['shelf_id'],
+                properties: {
+                    worker_id: {
+                        type: 'number',
+                        minimum: 1,
+                        maximum: 2147483647
+                    }
+                }
+            },
+        }
+    }, protect({
+        userType: USER_WORKER,
+        role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
+    }, get));
+
+    app.post('/:branch_id/shelf', {
         schema: {
             params: {
                 type: 'object',
@@ -87,4 +184,4 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
     }, post));
 }
 
-export const autoPrefix = '/crm/branch/:branch_id/shelf';
+export const autoPrefix = '/crm/branch';
