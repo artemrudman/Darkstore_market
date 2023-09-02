@@ -5,6 +5,8 @@ import { ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, USER_WO
 import { Worker } from '../../../models/worker';
 import { generateQr } from '../../../utils/qr';
 
+// TODO: Сделать endpoint для добавления продуктов(в файле item.ts)
+
 function checkTimezone(timeZone: string) {
     if (!Intl || !Intl.DateTimeFormat().resolvedOptions().timeZone) {
         throw new Error('Time zones are not available in this environment');
@@ -20,6 +22,8 @@ function checkTimezone(timeZone: string) {
     }
 }
 
+
+
 async function getList(request: FastifyRequest<{
     Querystring: {
         only_name?: number;
@@ -30,6 +34,8 @@ async function getList(request: FastifyRequest<{
 
     return await db.branch.getList(request.query.page, !!request.query.only_name);
 }
+
+
 
 async function get(request: FastifyRequest<{
     Params: {
@@ -65,6 +71,8 @@ async function get(request: FastifyRequest<{
         schedule: await db.branchSchedule.get(request.params.branch_id)
     };
 }
+
+
 
 async function post(request: FastifyRequest<{
     Body: {
@@ -102,6 +110,8 @@ async function post(request: FastifyRequest<{
         qr
     };
 }
+
+
 
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.get('/list', {

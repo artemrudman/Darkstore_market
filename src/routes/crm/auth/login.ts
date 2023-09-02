@@ -37,6 +37,8 @@ async function post(request: FastifyRequest<{
     return await setJwtCookie(user.id, USER_WORKER, reply);
 }
 
+
+
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.post('/', {
         schema: {

@@ -13,7 +13,15 @@ export class WorkerTable {
         ])).rowCount > 0;
     }
 
-    async getList(branch_id: number, page: number) {
+    async getList(branch_id: number, page: number, role_id?: number) {
+        if (role_id) {
+            return (await this.db.query('SELECT id, branch_id, name, role_id, status, is_disabled FROM worker WHERE branch_id = $1 AND role_id = $2 LIMIT 15 OFFSET $3', [
+                branch_id,
+                role_id,
+                page * 15
+            ])).rows;
+        }
+
         return (await this.db.query('SELECT id, branch_id, name, role_id, status, is_disabled FROM worker WHERE branch_id = $1 LIMIT 15 OFFSET $2', [
             branch_id,
             page * 15

@@ -1,5 +1,4 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { SHA256 } from 'crypto-js';
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_EXECUTIVE_DIRECTOR, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
@@ -48,6 +47,8 @@ async function post(request: FastifyRequest<{
         qr
     };
 }
+
+
 
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.post('/', {

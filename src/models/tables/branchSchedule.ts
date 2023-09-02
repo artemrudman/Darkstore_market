@@ -8,19 +8,16 @@ export class BranchScheduleTable {
     }
 
     async get(branch_id: number): Promise<Array<string> | undefined> {
-        let schedule = ['1'];
+        let schedule = [];
 
-/*             if (day.status === 0) {
+        for (const day of (await this.db.query('SELECT status, start_time, end_time FROM branch_schedule WHERE branch_id = $1 ORDER BY day ASC', [
+            branch_id
+        ])).rows) {
+            if (day.status === 0) {
                 schedule.push(`${day.start_time.split(':').slice(0, 2).join(':')}-${day.end_time.split(':').slice(0, 2).join(':')}`);
             } else if (day.status === 1) {
                 schedule.push('Closed');
-            } */
-
-
-        for (const day of (await this.db.query('SELECT status, start_time, end_time FROM branch_schedule WHERE branch_id = $1 ORDER BY day DESC', [
-            branch_id
-        ])).rows) {
-            console.log(day);
+            }
         }
 
         return schedule;

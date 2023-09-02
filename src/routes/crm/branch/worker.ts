@@ -1,5 +1,4 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
-import { SHA256 } from 'crypto-js';
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_DELIVERYMAN, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, ROLE_WAREHOUSE_WORKER, USER_WORKER } from '../../../utils/constants';
@@ -12,6 +11,7 @@ async function getList(request: FastifyRequest<{
     },
     Querystring: {
         page: number;
+        role_id?: number;
     }
 }>, reply: FastifyReply) {
     const db = request.requestContext.get('db');
@@ -32,51 +32,10 @@ async function getList(request: FastifyRequest<{
         };
     }
 
-    return await db.worker.getList(request.params.branch_id, request.query.page);
+    return await db.worker.getList(request.params.branch_id, request.query.page, request.query.role_id);
 }
 
-async function get(request: FastifyRequest<{
-    Params: {
-        branch_id: number;
-        worker_id: number;
-    }
-}>, reply: FastifyReply) {
-    const user = request.requestContext.get('user') as Worker;
 
-    if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
-        reply.statusCode = 403;
-        return {
-            error: 'FORBIDDEN'
-        };
-    }
-
-    const db = request.requestContext.get('db');
-
-    if (!(await db.worker.getById(request.params.branch_id))) {
-        reply.statusCode = 404;
-        return {
-            error: 'BRANCH_NOT_FOUND'
-        };
-    }
-
-    const worker = await db.worker.getById(request.params.worker_id);
-
-    if (!worker) {
-        reply.statusCode = 404;
-        return {
-            error: 'NOT_FOUND'
-        };
-    }
-
-    return {
-        id: worker.id,
-        branch_id: worker.branch_id,
-        name: worker.name,
-        role_id: worker.role_id,
-        status: worker.status,
-        is_disabled: worker.is_disabled
-    };
-}
 
 async function post(request: FastifyRequest<{
     Params: {
@@ -126,6 +85,8 @@ async function post(request: FastifyRequest<{
     };
 }
 
+
+
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.get('/list', {
         schema: {
@@ -147,6 +108,11 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                     page: {
                         type: 'number',
                         minimum: 0
+                    },
+                    role_id: {
+                        type: 'number',
+                        minimum: 0,
+                        maximum: 6
                     }
                 }
             }
@@ -155,30 +121,6 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
         userType: USER_WORKER,
         role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
     }, getList));
-
-    app.get('/:worker_id', {
-        schema: {
-            params: {
-                type: 'object',
-                required: ['branch_id', 'worker_id'],
-                properties: {
-                    branch_id: {
-                        type: 'number',
-                        minimum: 1,
-                        maximum: 2147483647
-                    },
-                    worker_id: {
-                        type: 'number',
-                        minimum: 1,
-                        maximum: 2147483647
-                    }
-                }
-            },
-        }
-    }, protect({
-        userType: USER_WORKER,
-        role: [ROLE_TECHNICAL_DIRECTOR, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER]
-    }, get));
 
     app.post('/', {
         schema: {

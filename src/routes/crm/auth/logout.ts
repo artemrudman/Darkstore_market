@@ -36,6 +36,8 @@ async function post(request: FastifyRequest, reply: FastifyReply) {
     return;
 }
 
+
+
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.post('/', post);
 }
