@@ -57,7 +57,7 @@ async function get(request: FastifyRequest<{
     if (!branch) {
         reply.statusCode = 404;
         return {
-            error: 'NOT_FOUND'
+            error: 'BRANCH_NOT_FOUND'
         };
     }
 
@@ -86,7 +86,7 @@ async function post(request: FastifyRequest<{
     if (!checkTimezone(request.body.timezone)) {
         reply.statusCode = 400;
         return {
-            error: 'BAD_REQUEST'
+            error: 'INVALID_DATA'
         };
     }
 

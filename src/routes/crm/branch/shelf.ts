@@ -47,7 +47,7 @@ async function get(request: FastifyRequest<{
     if (!shelf) {
         reply.statusCode = 404;
         return {
-            error: 'NOT_FOUND'
+            error: 'SHELF_NOT_FOUND'
         };
     }
 

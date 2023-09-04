@@ -48,7 +48,7 @@ async function get(request: FastifyRequest<{
     if (!worker) {
         reply.statusCode = 404;
         return {
-            error: 'NOT_FOUND'
+            error: 'WORKER_NOT_FOUND'
         };
     }
 

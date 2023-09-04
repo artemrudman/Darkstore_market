@@ -28,6 +28,11 @@ declare module '@fastify/request-context' {
 
 async function run() {
     config();
+
+    const db = new DB();
+    const redis = createClient({ url: process.env.REDIS_URL });
+
+    await redis.connect();
     
     let https: https.ServerOptions | null = null;
     
@@ -41,10 +46,6 @@ async function run() {
         logger: process.env.NODE_ENV !== 'production',
         https
     });
-    const db = new DB();
-    const redis = createClient({ url: process.env.REDIS_URL });
-
-    await redis.connect();
 
     await app.register(fastifyStatic, {
         root: join(__dirname, 'public'),
