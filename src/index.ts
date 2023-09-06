@@ -33,18 +33,9 @@ async function run() {
     const redis = createClient({ url: process.env.REDIS_URL });
 
     await redis.connect();
-    
-    let https: https.ServerOptions | null = null;
-    
-    if (process.env.NODE_ENV === 'production') {
-        https = {};
-        https.key = readFileSync(join(__dirname, '..', 'tls', 'key.pem'));
-        https.cert = readFileSync(join(__dirname, '..', 'tls', 'cert.pem'));
-    }
 
     const app = fastify({
-        logger: process.env.NODE_ENV !== 'production',
-        https
+        logger: process.env.NODE_ENV !== 'production'
     });
 
     await app.register(fastifyStatic, {
