@@ -47,4 +47,11 @@ export class BranchTable {
             created_by_id
         ])).rows[0].id;
     }
+
+    async updateStatus(id: number, status: number) {
+        await this.db.query('UPDATE branch SET status = $1 WHERE id = $2', [
+            id,
+            status
+        ]);
+    }
 }

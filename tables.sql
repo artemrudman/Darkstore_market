@@ -36,19 +36,12 @@ CREATE TABLE branch_schedule(
 CREATE TABLE branch_items(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
-    name VARCHAR(150) NOT NULL,
-    description VARCHAR(350) NOT NULL,
-    ingredients VARCHAR(350) NOT NULL,
-    weight INTEGER NOT NULL,
-    product_type_id INTEGER NOT NULL,
-    storage_type_id INTEGER NOT NULL,
-    items JSON NOT NULL,
+    item_id INTEGER NOT NULL,
+    shelf_amount JSONB NOT NULL,
     expires_date TIMESTAMP NOT NULL,
     is_sale BOOLEAN NOT NULL,
     price FLOAT NOT NULL,
     sale_price FLOAT NOT NULL,
-    picture_uuid VARCHAR(36) NOT NULL,
-    barcode CHAR(64) NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
 );
@@ -71,7 +64,7 @@ CREATE TABLE branch_shelfs(
 CREATE TABLE acceptance(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
-    items JSON NOT NULL, /* make some marker for accepted items */
+    items JSONB NOT NULL, /* make some marker for accepted items */
     is_finished BOOLEAN NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by_id INTEGER NOT NULL
@@ -80,6 +73,19 @@ CREATE TABLE acceptance(
 
 
 
+CREATE TABLE item(
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    description VARCHAR(350) NOT NULL,
+    ingredients VARCHAR(350) NOT NULL,
+    weight INTEGER NOT NULL,
+    product_type_id INTEGER NOT NULL,
+    storage_type_id INTEGER NOT NULL,
+    picture_uuid CHAR(36) NOT NULL,
+    barcode CHAR(64) NOT NULL,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by_id INTEGER NOT NULL
+);
 
 CREATE TABLE storage_type(
     id SERIAL PRIMARY KEY,
@@ -117,7 +123,7 @@ CREATE TABLE user_(
     email VARCHAR(50) NOT NULL,
     phone_number VARCHAR(16) NOT NULL,
     password CHAR(60) NOT NULL,
-    payment_info JSON NOT NULL,
+    payment_info JSONB NOT NULL,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_disabled BOOLEAN NOT NULL
 );
@@ -172,11 +178,14 @@ CREATE TABLE operation( /* add all operations here - write logic of text in ever
 );
 
 
+
+
+
 CREATE TABLE order_(
     id SERIAL PRIMARY KEY,
     branch_id INTEGER NOT NULL,
     number VARCHAR(50) NOT NULL, -- ?
-    items JSON NOT NULL,
+    items JSONB NOT NULL,
     status SMALLINT NOT NULL,
     /* 
         0. awaiting preparation

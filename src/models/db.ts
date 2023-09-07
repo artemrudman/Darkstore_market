@@ -6,6 +6,7 @@ import { BranchTable } from "./tables/branch";
 import { BranchScheduleTable } from "./tables/branchSchedule";
 import { BranchShelfTable } from "./tables/branchShelf";
 import { UserTable } from "./tables/user";
+import { ItemTable } from "./tables/item";
 
 export class DB {
     public productType: ProductTypeTable;
@@ -14,6 +15,7 @@ export class DB {
     public branch: BranchTable;
     public branchSchedule: BranchScheduleTable;
     public branchShelf: BranchShelfTable;
+    public item: ItemTable;
     public user: UserTable;
     constructor() {
         const db = new Pool({ connectionString: process.env.POSTGRES_URL });
@@ -24,6 +26,7 @@ export class DB {
         this.branch = new BranchTable(db);
         this.branchSchedule = new BranchScheduleTable(db);
         this.branchShelf = new BranchShelfTable(db);
+        this.item = new ItemTable(db);
         this.user = new UserTable(db);
     }
 }
