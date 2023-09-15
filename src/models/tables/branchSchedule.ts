@@ -1,16 +1,16 @@
-import { Pool } from "pg";
-import format from "pg-format";
+import { PoolClient } from 'pg';
+import format from 'pg-format';
 
 export class BranchScheduleTable {
-    private db: Pool;
-    constructor(db: Pool) {
-        this.db = db;
+    private client: PoolClient;
+    constructor(client: PoolClient) {
+        this.client = client;
     }
 
     async get(branch_id: number): Promise<Array<string> | undefined> {
         let schedule = [];
 
-        for (const day of (await this.db.query('SELECT status, start_time, end_time FROM branch_schedule WHERE branch_id = $1 ORDER BY day ASC', [
+        for (const day of (await this.client.query('SELECT status, start_time, end_time FROM branch_schedule WHERE branch_id = $1 ORDER BY day ASC', [
             branch_id
         ])).rows) {
             if (day.status === 0) {
@@ -37,6 +37,6 @@ export class BranchScheduleTable {
             }
         }
         
-        await this.db.query(format('INSERT INTO branch_schedule VALUES %L', rows));
+        await this.client.query(format('INSERT INTO branch_schedule VALUES %L', rows));
     }
 }

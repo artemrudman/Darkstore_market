@@ -2,8 +2,9 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { verify, sign, SignOptions } from 'jsonwebtoken';
 
 import { USER_CLIENT, USER_WORKER } from './constants';
-import { Worker } from '../models/worker';
-import { User } from '../models/user';
+import { Worker, User } from '../models/types';
+import { UserTable } from '../models/tables/user';
+import { WorkerTable } from '../models/tables/worker';
 
 export interface TokenInterface {
     i: number;
@@ -43,7 +44,6 @@ export async function setJwtCookie(id: number, type: number, reply: FastifyReply
     });
 
     if (typeof(token) !== 'string') {
-        reply.statusCode = 500;
         return {
             error: 'INTERNAL_SERVER_ERROR'
         };
@@ -63,7 +63,6 @@ export function protect(options: ProtectOptions,
     next: (request: FastifyRequest<any>, reply: FastifyReply) => Promise<any>) {
     return async (request: FastifyRequest, reply: FastifyReply) => {
         if (!request.cookies.token) {
-            reply.statusCode = 401;
             return {
                 error: 'UNAUTHORIZED'
             };
@@ -74,58 +73,58 @@ export function protect(options: ProtectOptions,
         try {
             decoded = await jwtVerify(request.cookies.token) as TokenInterface;
         } catch {
-            reply.statusCode = 401;
             return {
                 error: 'UNAUTHORIZED'
             };
         }
 
-        const redis = request.requestContext.get('redis');
-
-        if (await redis.get(request.cookies.token) !== null) {
-            reply.statusCode = 401;
+        if (await request.reqData.redisClient.get(request.cookies.token) !== null) {
             return {
                 error: 'UNAUTHORIZED'
             };
         }
         
         if (options.userType && options.userType !== decoded.t) {
-            reply.statusCode = 403;
             return {
                 error: 'FORBIDDEN'
             };
         }
 
         let user;
-        const db = request.requestContext.get('db');
 
         if (decoded.t === USER_CLIENT) {
-            user = await db.user.getById(decoded.i) as User;
-        } else if (decoded.t === USER_WORKER) {
-            user = await db.worker.getById(decoded.i) as Worker;
+            const client = await (new UserTable(request.reqData.pgClient)).getById(decoded.i);
 
-            if (user && options.role && !options.role.includes(user.role_id)) {
-                reply.statusCode = 403;
+            if (!client) {
                 return {
                     error: 'FORBIDDEN'
                 };
             }
+
+            user = client;
+        } else if (decoded.t === USER_WORKER) {
+            const worker = await (new WorkerTable(request.reqData.pgClient)).getById(decoded.i);
+            
+            if (!worker || (worker && options.role && !options.role.includes(worker.role_id))) {
+                return {
+                    error: 'FORBIDDEN'
+                };
+            }
+
+            user = worker;
         } else {
-            reply.statusCode = 403;
             return {
                 error: 'FORBIDDEN'
             };
         }
 
         if (!user || user.is_disabled) {
-            reply.statusCode = 403;
             return {
                 error: 'FORBIDDEN'
             };
         }
-
-        request.requestContext.set('user', user);
-        request.requestContext.set('userType', decoded.t);
+        
+        request.reqData.user = user;
 
         return await next(request, reply);
     };

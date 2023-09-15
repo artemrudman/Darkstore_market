@@ -4,7 +4,6 @@ import { TokenInterface, jwtVerify } from '../../../utils/jwtUtils';
 
 async function post(request: FastifyRequest, reply: FastifyReply) {
     if (!request.cookies.token) {
-        reply.statusCode = 401;
         return {
             error: 'UNAUTHORIZED'
         };
@@ -15,7 +14,6 @@ async function post(request: FastifyRequest, reply: FastifyReply) {
     try {
         decoded = await jwtVerify(request.cookies.token) as TokenInterface;
     } catch {
-        reply.statusCode = 401;
         return {
             error: 'UNAUTHORIZED'
         };
@@ -26,10 +24,8 @@ async function post(request: FastifyRequest, reply: FastifyReply) {
         secure: process.env.NODE_ENV === 'production',
         path: '/'
     });
-
-    const redis = request.requestContext.get('redis');
-
-    await redis.set(request.cookies.token, '', {
+    
+    await request.reqData.redisClient.set(request.cookies.token, '', {
         EX: decoded.exp - Math.floor(Date.now() / 1000) + 1
     });
 

@@ -2,8 +2,10 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_DELIVERYMAN, ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, ROLE_WAREHOUSE_WORKER, USER_WORKER } from '../../../utils/constants';
-import { Worker } from '../../../models/worker';
+import { Worker } from '../../../models/types';
 import { generateQr } from '../../../utils/qr';
+import { BranchTable } from '../../../models/tables/branch';
+import { WorkerTable } from '../../../models/tables/worker';
 
 async function getList(request: FastifyRequest<{
     Params: {
@@ -14,25 +16,25 @@ async function getList(request: FastifyRequest<{
         role_id?: number;
     }
 }>, reply: FastifyReply) {
-    const db = request.requestContext.get('db');
+    const branchTable = new BranchTable(request.reqData.pgClient);
 
-    if (!(await db.branch.hasId(request.params.branch_id))) {
-        reply.statusCode = 404;
+    if (!(await branchTable.hasId(request.params.branch_id))) {
         return {
             error: 'BRANCH_NOT_FOUND'
         };
     }
 
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
 
     if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
-        reply.statusCode = 403;
         return {
             error: 'FORBIDDEN'
         };
     }
 
-    return await db.worker.getList(request.params.branch_id, request.query.page, request.query.role_id);
+    const workerTable = new WorkerTable(request.reqData.pgClient);
+
+    return await workerTable.getList(request.params.branch_id, request.query.page, request.query.role_id);
 }
 
 
@@ -42,20 +44,18 @@ async function get(request: FastifyRequest<{
         worker_id: number;
     }
 }>, reply: FastifyReply) {
-    const db = request.requestContext.get('db');
-    const worker = await db.worker.getById(request.params.worker_id);
+    const workerTable = new WorkerTable(request.reqData.pgClient);
+    const worker = await workerTable.getById(request.params.worker_id);
 
     if (!worker) {
-        reply.statusCode = 404;
         return {
             error: 'WORKER_NOT_FOUND'
         };
     }
 
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
 
     if (user.role_id === ROLE_MANAGER && user.branch_id !== worker.branch_id) {
-        reply.statusCode = 403;
         return {
             error: 'FORBIDDEN'
         };
@@ -84,41 +84,37 @@ async function post(request: FastifyRequest<{
         role_id: number;
     }
 }>, reply: FastifyReply) {
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
     
     if (user.role_id === ROLE_MANAGER && 
         (![ROLE_WAREHOUSE_WORKER, ROLE_DELIVERYMAN].includes(request.body.role_id)
             || user.branch_id !== request.params.branch_id)) {
-        reply.statusCode = 403;
         return {
             error: 'FORBIDDEN'
         };
     }
 
-    const db = request.requestContext.get('db');
+    const branchTable = new BranchTable(request.reqData.pgClient);
 
-    if (!(await db.branch.hasId(request.params.branch_id))) {
-        reply.statusCode = 404;
+    if (!(await branchTable.hasId(request.params.branch_id))) {
         return {
             error: 'BRANCH_NOT_FOUND'
         };
     }
 
-    const qr = await generateQr(db.worker);
+    const workerTable = new WorkerTable(request.reqData.pgClient);
+    const qr = await generateQr(workerTable);
 
     if (!qr) {
-        reply.statusCode = 500;
         return {
             error: 'INTERNAL_SERVER_ERROR'
         };
     }
 
-    await db.worker.create(request.params.branch_id, request.body.name, request.body.email,
+    await workerTable.create(request.params.branch_id, request.body.name, request.body.email,
         request.body.phone_number, request.body.role_id, qr, user.id);
 
-    return {
-        qr
-    };
+    return { qr };
 }
 
 

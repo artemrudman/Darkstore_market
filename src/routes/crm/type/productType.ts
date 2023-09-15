@@ -2,17 +2,18 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_EXECUTIVE_DIRECTOR, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
-import { Worker } from '../../../models/worker';
+import { Worker } from '../../../models/types';
+import { ProductTypeTable } from '../../../models/tables/productType';
 
 async function post(request: FastifyRequest<{
     Body: {
         name: string;
     }
 }>, reply: FastifyReply) {
-    const db = request.requestContext.get('db');
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
+    const productTypeTable = new ProductTypeTable(request.reqData.pgClient);
 
-    await db.productType.create(request.body.name, user.id);
+    await productTypeTable.create(request.body.name, user.id);
 
     return;
 }

@@ -2,7 +2,10 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 
 import { protect } from '../../utils/jwtUtils';
 import { ROLE_TECHNICAL_DIRECTOR, ROLE_TECHNICAL_SUPPORT, USER_WORKER } from '../../utils/constants';
-import { Worker } from '../../models/worker';
+import { Worker } from '../../models/types';
+import { ProductTypeTable } from '../../models/tables/productType';
+import { StorageTypeTable } from '../../models/tables/storageType';
+import { ItemTable } from '../../models/tables/item';
 
 async function post(request: FastifyRequest<{
     Body: {
@@ -15,30 +18,32 @@ async function post(request: FastifyRequest<{
         barcode: string;
     }
 }>, reply: FastifyReply){
-    const db = request.requestContext.get('db');
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
+    const productTypeTable = new ProductTypeTable(request.reqData.pgClient);
 
-    if (!(await db.productType.hasId(request.body.product_type_id))) {
-        reply.statusCode = 404;
+    if (!(await productTypeTable.hasId(request.body.product_type_id))) {
         return {
             error: 'PRODUCT_TYPE_NOT_FOUND'
         };
     }
-    if (!(await db.storageType.hasId(request.body.storage_type_id))) {
-        reply.statusCode = 404;
+
+    const storageTypeTable = new StorageTypeTable(request.reqData.pgClient);
+
+    if (!(await storageTypeTable.hasId(request.body.storage_type_id))) {
         return {
             error: 'STORAGE_TYPE_NOT_FOUND'
         };
     }
 
-    if (await db.item.hasBarcode(request.body.barcode)) {
-        reply.statusCode = 409;
+    const itemTable = new ItemTable(request.reqData.pgClient);
+
+    if (await itemTable.hasBarcode(request.body.barcode)) {
         return {
             error: 'BARCODE_ALREADY_USED'
         };
     }
 
-    await db.item.create(request.body.name, request.body.description, request.body.ingredients,
+    await itemTable.create(request.body.name, request.body.description, request.body.ingredients,
         request.body.weight, request.body.product_type_id, request.body.storage_type_id, 'PICTURE UUID',
         request.body.barcode, user.id);
 

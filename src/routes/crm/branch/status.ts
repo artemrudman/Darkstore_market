@@ -2,7 +2,8 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_MANAGER, USER_WORKER } from '../../../utils/constants';
-import { Worker } from '../../../models/worker';
+import { Worker } from '../../../models/types';
+import { BranchTable } from '../../../models/tables/branch';
 
 async function post(request: FastifyRequest<{
     Params: {
@@ -12,24 +13,23 @@ async function post(request: FastifyRequest<{
         status: number;
     }
 }>, reply: FastifyReply){
-    const db = request.requestContext.get('db');
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
 
     if (user.branch_id !== request.params.branch_id) {
-        reply.statusCode = 403;
         return {
             error: 'FORBIDDEN'
         };
     }
+
+    const branchTable = new BranchTable(request.reqData.pgClient);
     
-    if (!(await db.branch.hasId(request.params.branch_id))) {
-        reply.statusCode = 404;
+    if (!(await branchTable.hasId(request.params.branch_id))) {
         return {
             error: 'BRANCH_NOT_FOUND'
         };
     }
 
-    await db.branch.updateStatus(request.params.branch_id, request.body.status);
+    await branchTable.updateStatus(request.params.branch_id, request.body.status);
 
     return;
 }

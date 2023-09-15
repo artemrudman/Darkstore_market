@@ -1,12 +1,12 @@
-import { Pool } from "pg";
+import { PoolClient } from 'pg';
 
 export class UserTable {
-    private db: Pool;
-    constructor(db: Pool) {
-        this.db = db;
+    private client: PoolClient;
+    constructor(client: PoolClient) {
+        this.client = client;
     }
 
     async getById(id: number) {
-        return (await this.db.query('SELECT * FROM user_ WHERE id = $1', [id])).rows[0];
+        return (await this.client.query('SELECT * FROM user_ WHERE id = $1', [id])).rows[0];
     }
 }

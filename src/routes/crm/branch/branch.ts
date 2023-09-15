@@ -2,8 +2,10 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
-import { Worker } from '../../../models/worker';
+import { Worker } from '../../../models/types';
 import { generateQr } from '../../../utils/qr';
+import { BranchTable } from '../../../models/tables/branch';
+import { BranchScheduleTable } from '../../../models/tables/branchSchedule';
 
 // TODO: Сделать endpoint для добавления продуктов(в файле item.ts)
 
@@ -30,9 +32,9 @@ async function getList(request: FastifyRequest<{
         page: number;
     }
 }>, reply: FastifyReply) {
-    const db = request.requestContext.get('db');
+    const branchTable = new BranchTable(request.reqData.pgClient);
 
-    return await db.branch.getList(request.query.page, !!request.query.only_name);
+    return await branchTable.getList(request.query.page, !!request.query.only_name);
 }
 
 
@@ -42,22 +44,29 @@ async function get(request: FastifyRequest<{
         branch_id: number;
     }
 }>, reply: FastifyReply) {
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
 
     if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
-        reply.statusCode = 403;
         return {
             error: 'FORBIDDEN'
         };
     }
 
-    const db = request.requestContext.get('db');
-    const branch = await db.branch.getById(request.params.branch_id);
+    const branchTable = new BranchTable(request.reqData.pgClient);
+    const branch = await branchTable.getById(request.params.branch_id);
 
     if (!branch) {
-        reply.statusCode = 404;
         return {
             error: 'BRANCH_NOT_FOUND'
+        };
+    }
+
+    const branchScheduleTable = new BranchScheduleTable(request.reqData.pgClient);
+    const schedule = branchScheduleTable.get(request.params.branch_id);
+
+    if (!schedule) {
+        return {
+            error: 'INTERNAL_SERVER_ERROR'
         };
     }
 
@@ -68,7 +77,7 @@ async function get(request: FastifyRequest<{
         timezone: branch.timezone,
         phone_number: branch.phone_number,
         status: branch.status,
-        schedule: await db.branchSchedule.get(request.params.branch_id)
+        schedule
     };
 }
 
@@ -84,31 +93,28 @@ async function post(request: FastifyRequest<{
     }
 }>, reply: FastifyReply) {
     if (!checkTimezone(request.body.timezone)) {
-        reply.statusCode = 400;
         return {
             error: 'INVALID_DATA'
         };
     }
 
-    const db = request.requestContext.get('db');
-    const qr = await generateQr(db.branch);
+    const branchTable = new BranchTable(request.reqData.pgClient);
+    const qr = await generateQr(branchTable);
 
     if (!qr) {
-        reply.statusCode = 500;
         return {
             error: 'INTERNAL_SERVER_ERROR'
         };
     }
 
-    const user = request.requestContext.get('user') as Worker;
-    const branchId = await db.branch.create(request.body.name, request.body.address, request.body.timezone,
+    const user = request.reqData.user as unknown as Worker;
+    const branchId = await branchTable.create(request.body.name, request.body.address, request.body.timezone,
         request.body.phone_number, qr, user.id);
+    const branchScheduleTable = new BranchScheduleTable(request.reqData.pgClient);
+
+    await branchScheduleTable.create(branchId, request.body.schedule);
     
-    await db.branchSchedule.create(branchId, request.body.schedule);
-    
-    return {
-        qr
-    };
+    return { qr };
 }
 
 

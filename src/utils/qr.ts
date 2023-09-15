@@ -1,13 +1,13 @@
-import { WorkerTable } from "../models/tables/worker";
-import { BranchTable } from "../models/tables/branch";
-import { BranchShelfTable } from "../models/tables/branchShelf";
+import { WorkerTable } from '../models/tables/worker';
+import { BranchTable } from '../models/tables/branch';
+import { BranchShelfTable } from '../models/tables/branchShelf';
 
 function generateData() {
-    const chars = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+    const chars = '!#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
     let result = '';
 
     for (let i = 0; i < 64; ++i) {
-        result += chars[Math.floor(Math.random() * 94)];
+        result += chars[Math.floor(Math.random() * 93)];
     }
 
     return result;

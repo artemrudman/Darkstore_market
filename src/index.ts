@@ -3,34 +3,30 @@ import fastifyStatic from '@fastify/static';
 import fastifyAutoload from '@fastify/autoload';
 import fastifyWebsocket from '@fastify/websocket';
 import fastifyCookie from '@fastify/cookie';
-import fastifyRequestContext from '@fastify/request-context';
-import https from 'https';
-import { readFileSync } from 'fs';
 import { join } from 'path';
 import { config } from 'dotenv';
 import { RedisClientType, RedisFunctions, RedisModules, RedisScripts, createClient } from 'redis';
 
-import ws from './ws/ws';
-import { DB } from './models/db';
+import { User } from './models/types';
+import { Worker } from 'cluster';
+import { Pool, PoolClient } from 'pg';
+import db from './middleware/db';
 
-declare module '@fastify/request-context' {
-    interface RequestContextData {
-        user?: any;
-        userType?: number;
-        db: DB;
-        redis: RedisClientType<RedisModules, RedisFunctions, RedisScripts>;
+declare module 'fastify' {
+    interface FastifyRequest {
+        reqData: {
+            user?: User | Worker;
+            pgClient: PoolClient;
+            redisClient: RedisClientType<RedisModules, RedisFunctions, RedisScripts>;
+        }
     }
-
-    interface RequestContext {
-        get<K extends keyof RequestContextData>(key: K): RequestContextData[K];
-    }
-}
+};
 
 async function run() {
     config();
 
-    const db = new DB();
     const redis = createClient({ url: process.env.REDIS_URL });
+    const pg = new Pool({ connectionString: process.env.POSTGRES_URL });
 
     await redis.connect();
 
@@ -46,18 +42,11 @@ async function run() {
         dir: join(__dirname, 'routes')
     });
     await app.register(fastifyCookie);
-    await app.register(fastifyRequestContext, {
-        defaultStoreValues: {
-            db,
-            redis
-        }
-    });
-    await app.register(fastifyWebsocket);
-
-    await app.register(ws, {
-        db,
+    await app.register(db, {
+        pg,
         redis
     });
+    await app.register(fastifyWebsocket);
 
     try {
         await app.listen({

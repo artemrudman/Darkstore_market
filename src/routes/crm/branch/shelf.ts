@@ -2,8 +2,11 @@ import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } f
 
 import { protect } from '../../../utils/jwtUtils';
 import { ROLE_EXECUTIVE_DIRECTOR, ROLE_MANAGER, ROLE_TECHNICAL_DIRECTOR, USER_WORKER } from '../../../utils/constants';
-import { Worker } from '../../../models/worker';
+import { Worker } from '../../../models/types';
 import { generateQr } from '../../../utils/qr';
+import { BranchTable } from '../../../models/tables/branch';
+import { BranchShelfTable } from '../../../models/tables/branchShelf';
+import { StorageTypeTable } from '../../../models/tables/storageType';
 
 async function getList(request: FastifyRequest<{
     Params: {
@@ -13,25 +16,25 @@ async function getList(request: FastifyRequest<{
         page: number;
     }
 }>, reply: FastifyReply) {
-    const db = request.requestContext.get('db');
+    const branchTable = new BranchTable(request.reqData.pgClient);
 
-    if (!(await db.branch.hasId(request.params.branch_id))) {
-        reply.statusCode = 404;
+    if (!(await branchTable.hasId(request.params.branch_id))) {
         return {
             error: 'BRANCH_NOT_FOUND'
         };
     }
 
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
 
     if (user.role_id === ROLE_MANAGER && user.branch_id !== request.params.branch_id) {
-        reply.statusCode = 403;
         return {
             error: 'FORBIDDEN'
         };
     }
 
-    return await db.branchShelf.getList(request.params.branch_id, request.query.page);
+    const branchShelfTable = new BranchShelfTable(request.reqData.pgClient);
+
+    return await branchShelfTable.getList(request.params.branch_id, request.query.page);
 }
 
 
@@ -41,20 +44,18 @@ async function get(request: FastifyRequest<{
         shelf_id: number;
     }
 }>, reply: FastifyReply) {
-    const db = request.requestContext.get('db');
-    const shelf = await db.branchShelf.getById(request.params.shelf_id);
+    const branchShelfTable = new BranchShelfTable(request.reqData.pgClient);
+    const shelf = await branchShelfTable.getById(request.params.shelf_id);
 
     if (!shelf) {
-        reply.statusCode = 404;
         return {
             error: 'SHELF_NOT_FOUND'
         };
     }
 
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
 
     if (user.role_id === ROLE_MANAGER && user.branch_id !== shelf.branch_id) {
-        reply.statusCode = 403;
         return {
             error: 'FORBIDDEN'
         };
@@ -74,33 +75,33 @@ async function post(request: FastifyRequest<{
         storage_type_id: number;
     }
 }>, reply: FastifyReply){
-    const db = request.requestContext.get('db');
-    const user = request.requestContext.get('user') as Worker;
+    const user = request.reqData.user as unknown as Worker;
+    const branchTable = new BranchTable(request.reqData.pgClient);
 
-    if (!(await db.branch.hasId(request.params.branch_id))) {
-        reply.statusCode = 404;
+    if (!(await branchTable.hasId(request.params.branch_id))) {
         return {
             error: 'BRANCH_NOT_FOUND'
         };
     }
 
-    if (!(await db.storageType.hasId(request.body.storage_type_id))) {
-        reply.statusCode = 404;
+    const storageTypeTable = new StorageTypeTable(request.reqData.pgClient);
+
+    if (!(await storageTypeTable.hasId(request.body.storage_type_id))) {
         return {
             error: 'STORAGE_TYPE_NOT_FOUND'
         };
     }
 
-    const qr = await generateQr(db.branchShelf);
+    const branchShelfTable = new BranchShelfTable(request.reqData.pgClient);
+    const qr = await generateQr(branchShelfTable);
 
     if (!qr) {
-        reply.statusCode = 500;
         return {
             error: 'INTERNAL_SERVER_ERROR'
         };
     }
 
-    await db.branchShelf.create(request.params.branch_id, request.body.name,
+    await branchShelfTable.create(request.params.branch_id, request.body.name,
         request.body.storage_type_id, qr, user.id);
 
     return {
@@ -113,6 +114,17 @@ async function post(request: FastifyRequest<{
 export default async function(app: FastifyInstance, opts: FastifyPluginOptions) {
     app.get('/:branch_id/shelf/list', {
         schema: {
+            params: {
+                type: 'object',
+                required: ['branch_id'],
+                properties: {
+                    branch_id: {
+                        type: 'number',
+                        minimum: 1,
+                        maximum: 2147483647
+                    }
+                }
+            },
             querystring: {
                 type: 'object',
                 required: ['page'],
@@ -141,7 +153,7 @@ export default async function(app: FastifyInstance, opts: FastifyPluginOptions) 
                         maximum: 2147483647
                     }
                 }
-            },
+            }
         }
     }, protect({
         userType: USER_WORKER,
