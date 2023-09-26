@@ -2,3 +2,4 @@
 /build
 /tls
 .vscode
+.env
