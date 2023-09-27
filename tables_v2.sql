@@ -56,8 +56,7 @@ CREATE TABLE branch_item(
   expires_at TIMESTAMP NOT NULL,
   is_sale BOOLEAN NOT NULL,
   price FLOAT NOT NULL,
-  sale_price FLOAT NOT NULL,
-  acceptance_id INTEGER NOT NULL
+  sale_price FLOAT NOT NULL
 );
 
 CREATE TABLE branch_shelf(
