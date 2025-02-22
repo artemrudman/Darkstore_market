@@ -84,23 +84,3 @@ PATCH /orders/:id       # Update order status
    ```sh
    npm run dev
    ```
-
-## Future Improvements
-- **GraphQL Support**
-- **Automated Order Assignment**
-- **Real-time Notifications**
-
-## Contributors
-- Your Name (@yourgithub)
-
-## License
-This project is licensed under the MIT License.
-
-
-
-Your Name (@yourgithub)
-
-License
-
-This project is licensed under the MIT License.
-
