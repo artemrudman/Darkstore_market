@@ -39,7 +39,7 @@ The system is structured around multiple tables that manage branches, users, inv
 - `worker`: Tracks workers and their statuses (e.g., available, on break, delivering orders).
 
 ### 4. **User & Authentication**
-- `user_`: Stores customer details, including payment information.
+- `user`: Stores customer details, including payment information.
 - `worker`: Manages employees with role-based access.
 - `operation`: Logs all system operations for audit purposes.
 
