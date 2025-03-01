@@ -60,8 +60,7 @@ PATCH /orders/:id       # Update order status
 ## Installation
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/yourrepo/dark-store.git
-   cd dark-store
+   git clone https://github.com/artemrudman/Darkstore_market
    ```
 
 2. **Install dependencies:**
